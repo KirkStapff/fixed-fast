@@ -1,5 +1,6 @@
 use crate::{FixedDecimal, function::Function};
 
+pub type Exp<const DECIMALS: u32> = ExpRangeReduceTaylor<DECIMALS, 10>;
 pub struct ExpRangeReduceTaylor<const DECIMALS: u32, const TAYLOR_ORDER: u32> {}
 
 impl<const DECIMALS: u32, const TAYLOR_ORDER: u32> ExpRangeReduceTaylor<DECIMALS, TAYLOR_ORDER> {
