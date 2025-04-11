@@ -3,7 +3,7 @@ use crate::{
     lookup_table::LookupTable,
 };
 
-type Ln<const DECIMALS: u32> = LnLinearInterpLookupTable<DECIMALS, 12>;
+pub type Ln<const DECIMALS: u32> = LnLinearInterpLookupTable<DECIMALS, 12>;
 
 pub struct LnArcTanhExpansion<const DECIMALS: u32, const APPROX_DEPTH: u32> {}
 

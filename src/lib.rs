@@ -6,6 +6,10 @@ mod ln;
 mod lookup_table;
 mod sqrt;
 
+pub use fixed_decimal::FixedDecimal;
+pub use ln::{Ln, LnArcTanhExpansion, LnLinearInterpLookupTable};
+pub use sqrt::{Sqrt, SqrtLinearInterpLookupTable, SqrtNewtonRaphson};
+
 #[cfg(test)]
 mod tests {
     use crate::fixed_decimal::FixedDecimal;
