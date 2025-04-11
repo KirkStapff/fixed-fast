@@ -36,6 +36,10 @@ impl<const DECIMALS: u32> FixedDecimal<DECIMALS> {
         10i128.pow(DECIMALS)
     }
 
+    pub fn zero() -> Self {
+        Self(0)
+    }
+
     pub fn from_integer(x: i128) -> Self {
         Self(x * Self::scale())
     }
