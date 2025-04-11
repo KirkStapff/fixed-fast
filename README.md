@@ -25,6 +25,3 @@ use fixed_decimal::FixedDecimal;
 type D10 = FixedDecimal<10>; // 10 decimal places
 
 let x = D10::from_str("1.5");          // 1.5
-let ln_x = x.ln();                     // ln(1.5)
-let square = x.squared();                 // 1.5^2 = 2.25
-let sqrt = x.sqrt();                   // √1.5 ≈ 1.2247
