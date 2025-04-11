@@ -36,7 +36,7 @@ impl<const DECIMALS: u32> FixedDecimal<DECIMALS> {
         10i128.pow(DECIMALS)
     }
 
-    pub fn zero() -> Self {
+    pub const fn zero() -> Self {
         Self(0)
     }
 
