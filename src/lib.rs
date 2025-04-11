@@ -22,6 +22,7 @@ mod tests {
         let b = FixedDecimal::<9>::from_integer(2);
         let c = a.mul(b);
         assert_eq!(c.to_integer(), 2);
+        assert_eq!(c * 2_u64, FixedDecimal::<9>::from_integer(4));
     }
 
     #[test]
