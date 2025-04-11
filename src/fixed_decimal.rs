@@ -9,7 +9,7 @@ use std::{
     },
 };
 
-#[derive(Clone, Copy, Eq)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub struct FixedDecimal<const DECIMALS: u32>(i128);
 
 impl<const DECIMALS: u32> Serialize for FixedDecimal<DECIMALS> {
@@ -202,12 +202,6 @@ impl<const DECIMALS: u32> DivAssign for FixedDecimal<DECIMALS> {
 impl<const DECIMALS: u32> PartialOrd<FixedDecimal<DECIMALS>> for FixedDecimal<DECIMALS> {
     fn partial_cmp(&self, other: &FixedDecimal<DECIMALS>) -> Option<Ordering> {
         Some(self.0.cmp(&other.0))
-    }
-}
-
-impl<const DECIMALS: u32> PartialEq<FixedDecimal<DECIMALS>> for FixedDecimal<DECIMALS> {
-    fn eq(&self, other: &FixedDecimal<DECIMALS>) -> bool {
-        self.0 == other.0
     }
 }
 
