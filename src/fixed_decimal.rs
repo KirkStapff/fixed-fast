@@ -1,8 +1,28 @@
 use core::fmt;
+use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 
 #[derive(Clone, Copy, Eq)]
 pub struct FixedDecimal<const DECIMALS: u32>(i128);
+
+impl<const DECIMALS: u32> Serialize for FixedDecimal<DECIMALS> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de, const DECIMALS: u32> Deserialize<'de> for FixedDecimal<DECIMALS> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        FixedDecimal::from_str(&s).map_err(serde::de::Error::custom)
+    }
+}
 
 impl<const DECIMALS: u32> FixedDecimal<DECIMALS> {
     const fn scale() -> i128 {
@@ -58,6 +78,10 @@ impl<const DECIMALS: u32> FixedDecimal<DECIMALS> {
 
     pub fn to_float(self) -> f64 {
         self.0 as f64 / Self::scale() as f64
+    }
+
+    pub fn to_string(self) -> String {
+        format!("{}.{}", self.to_integer(), self.0 % Self::scale())
     }
 
     pub fn add(self, right: Self) -> Self {
