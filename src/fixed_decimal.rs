@@ -96,12 +96,20 @@ impl<const DECIMALS: u32> FixedDecimal<DECIMALS> {
         Self((self.0 * right.0) / Self::scale())
     }
 
+    pub fn mul_u64(self, right: u64) -> Self {
+        Self(self.0 * right as i128)
+    }
+
+    pub fn mul_u32(self, right: u32) -> Self {
+        Self(self.0 * right as i128)
+    }
+
     pub fn mul_i128(self, right: i128) -> Self {
         Self(self.0 * right)
     }
 
     pub fn mul_usize(self, right: usize) -> Self {
-        Self(self.0 * (right as i128))
+        Self(self.0 * right as i128)
     }
 
     pub fn div(self, right: Self) -> Self {
@@ -224,6 +232,22 @@ impl<const DECIMALS: u32> std::ops::Mul<usize> for FixedDecimal<DECIMALS> {
 
     fn mul(self, right: usize) -> Self {
         self.mul_usize(right)
+    }
+}
+
+impl<const DECIMALS: u32> std::ops::Mul<u64> for FixedDecimal<DECIMALS> {
+    type Output = Self;
+
+    fn mul(self, right: u64) -> Self {
+        self.mul_u64(right)
+    }
+}
+
+impl<const DECIMALS: u32> std::ops::Mul<u32> for FixedDecimal<DECIMALS> {
+    type Output = Self;
+
+    fn mul(self, right: u32) -> Self {
+        self.mul_u32(right)
     }
 }
 
