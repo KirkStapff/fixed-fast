@@ -2,6 +2,7 @@ use core::fmt;
 use serde::{Deserialize, Serialize};
 use std::{
     cmp::Ordering,
+    iter::Sum,
     ops::{
         Add, AddAssign, Div, DivAssign, Mul, MulAssign, Shl, ShlAssign, Shr, ShrAssign, Sub,
         SubAssign,
@@ -335,3 +336,15 @@ macro_rules! impl_fixed_comparisons {
 }
 
 impl_fixed_comparisons!(i128, i64, i32, isize, u128, u64, u32, usize);
+
+impl<const DECIMALS: u32> Sum for FixedDecimal<DECIMALS> {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(FixedDecimal::from_raw(0), |acc, x| acc + x)
+    }
+}
+
+impl<'a, const DECIMALS: u32> Sum<&'a FixedDecimal<DECIMALS>> for FixedDecimal<DECIMALS> {
+    fn sum<I: Iterator<Item = &'a FixedDecimal<DECIMALS>>>(iter: I) -> Self {
+        iter.fold(FixedDecimal::from_raw(0), |acc, &x| acc + x)
+    }
+}

@@ -67,4 +67,14 @@ mod tests {
         let a = FixedDecimal::<9>::from_integer(1);
         assert_eq!(a.to_integer(), 1);
     }
+
+    #[test]
+    fn sum_vec() {
+        let vec = vec![
+            FixedDecimal::<9>::from_integer(1),
+            FixedDecimal::<9>::from_integer(2),
+            FixedDecimal::<9>::from_integer(3),
+        ];
+        assert_eq!(vec.iter().sum::<FixedDecimal<9>>(), 6);
+    }
 }
