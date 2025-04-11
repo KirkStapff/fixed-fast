@@ -17,7 +17,7 @@ impl<const DECIMALS: u32> LookupTable<DECIMALS> {
         step_size: FixedDecimal<DECIMALS>,
         f: impl Fn(FixedDecimal<DECIMALS>) -> FixedDecimal<DECIMALS>,
     ) -> Self {
-        let table_size = ((end.sub(start)).div(step_size)).to_integer() as usize;
+        let table_size = ((end.sub(start)).div(step_size)).to_i128() as usize;
         let mut table = Vec::new();
         for i in 0..table_size {
             let x = start + step_size * i;
@@ -33,9 +33,9 @@ impl<const DECIMALS: u32> LookupTable<DECIMALS> {
 
     pub fn get_index(&self, x: FixedDecimal<DECIMALS>) -> Result<usize> {
         if x < self.start || x > self.end {
-            return Err(FixedFastError::OutOfRange(x.to_integer() as usize));
+            return Err(FixedFastError::OutOfRange(x.to_i128() as usize));
         }
-        let index = ((x.sub(self.start)).div(self.step_size)).to_integer() as usize;
+        let index = ((x.sub(self.start)).div(self.step_size)).to_i128() as usize;
         Ok(index)
     }
 

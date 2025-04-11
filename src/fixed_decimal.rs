@@ -40,7 +40,7 @@ impl<const DECIMALS: u32> FixedDecimal<DECIMALS> {
         Self(0)
     }
 
-    pub fn from_integer(x: i128) -> Self {
+    pub fn from_i128(x: i128) -> Self {
         Self(x * Self::scale())
     }
 
@@ -64,7 +64,7 @@ impl<const DECIMALS: u32> FixedDecimal<DECIMALS> {
             decimal_part
         };
 
-        let mut result = Self::from_integer(
+        let mut result = Self::from_i128(
             integer_part
                 .parse::<i128>()
                 .map_err(|_| "Invalid integer part")?,
@@ -83,7 +83,7 @@ impl<const DECIMALS: u32> FixedDecimal<DECIMALS> {
         Ok(result)
     }
 
-    pub fn to_integer(self) -> i128 {
+    pub fn to_i128(self) -> i128 {
         self.0 / Self::scale()
     }
 
@@ -92,7 +92,7 @@ impl<const DECIMALS: u32> FixedDecimal<DECIMALS> {
     }
 
     pub fn to_string(self) -> String {
-        format!("{}.{}", self.to_integer(), self.0 % Self::scale())
+        format!("{}.{}", self.to_i128(), self.0 % Self::scale())
     }
 
     pub fn add(self, right: Self) -> Self {
@@ -144,7 +144,7 @@ impl<const DECIMALS: u32> fmt::Display for FixedDecimal<DECIMALS> {
 
 impl<const DECIMALS: u32> fmt::Debug for FixedDecimal<DECIMALS> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}.{}", self.to_integer(), self.0 % Self::scale())
+        write!(f, "{}.{}", self.to_i128(), self.0 % Self::scale())
     }
 }
 impl<const DECIMALS: u32> Add for FixedDecimal<DECIMALS> {
@@ -217,28 +217,28 @@ macro_rules! impl_fixed_ops_with_primitive {
             impl<const DECIMALS: u32> Add<$t> for FixedDecimal<DECIMALS> {
                 type Output = Self;
                 fn add(self, rhs: $t) -> Self::Output {
-                    self.add(FixedDecimal::from_integer(rhs as i128))
+                    self.add(FixedDecimal::from_i128(rhs as i128))
                 }
             }
 
             impl<const DECIMALS: u32> Add<FixedDecimal<DECIMALS>> for $t {
                 type Output = FixedDecimal<DECIMALS>;
                 fn add(self, rhs: FixedDecimal<DECIMALS>) -> Self::Output {
-                    FixedDecimal::from_integer(self as i128).add(rhs)
+                    FixedDecimal::from_i128(self as i128).add(rhs)
                 }
             }
 
             impl<const DECIMALS: u32> Sub<$t> for FixedDecimal<DECIMALS> {
                 type Output = Self;
                 fn sub(self, rhs: $t) -> Self::Output {
-                    self.sub(FixedDecimal::from_integer(rhs as i128))
+                    self.sub(FixedDecimal::from_i128(rhs as i128))
                 }
             }
 
             impl<const DECIMALS: u32> Sub<FixedDecimal<DECIMALS>> for $t {
                 type Output = FixedDecimal<DECIMALS>;
                 fn sub(self, rhs: FixedDecimal<DECIMALS>) -> Self::Output {
-                    FixedDecimal::from_integer(self as i128).sub(rhs)
+                    FixedDecimal::from_i128(self as i128).sub(rhs)
                 }
             }
 
@@ -259,14 +259,14 @@ macro_rules! impl_fixed_ops_with_primitive {
             impl<const DECIMALS: u32> Div<$t> for FixedDecimal<DECIMALS> {
                 type Output = Self;
                 fn div(self, rhs: $t) -> Self::Output {
-                    self.div(FixedDecimal::from_integer(rhs as i128))
+                    self.div(FixedDecimal::from_i128(rhs as i128))
                 }
             }
 
             impl<const DECIMALS: u32> Div<FixedDecimal<DECIMALS>> for $t {
                 type Output = FixedDecimal<DECIMALS>;
                 fn div(self, rhs: FixedDecimal<DECIMALS>) -> Self::Output {
-                    FixedDecimal::from_integer(self as i128).div(rhs)
+                    FixedDecimal::from_i128(self as i128).div(rhs)
                 }
             }
         )*
@@ -314,25 +314,25 @@ macro_rules! impl_fixed_comparisons {
         $(
             impl<const DECIMALS: u32> PartialEq<$t> for FixedDecimal<DECIMALS> {
                 fn eq(&self, other: &$t) -> bool {
-                    *self == FixedDecimal::from_integer(*other as i128)
+                    *self == FixedDecimal::from_i128(*other as i128)
                 }
             }
 
             impl<const DECIMALS: u32> PartialEq<FixedDecimal<DECIMALS>> for $t {
                 fn eq(&self, other: &FixedDecimal<DECIMALS>) -> bool {
-                    FixedDecimal::from_integer(*self as i128) == *other
+                    FixedDecimal::from_i128(*self as i128) == *other
                 }
             }
 
             impl<const DECIMALS: u32> PartialOrd<$t> for FixedDecimal<DECIMALS> {
                 fn partial_cmp(&self, other: &$t) -> Option<std::cmp::Ordering> {
-                    self.partial_cmp(&FixedDecimal::from_integer(*other as i128))
+                    self.partial_cmp(&FixedDecimal::from_i128(*other as i128))
                 }
             }
 
             impl<const DECIMALS: u32> PartialOrd<FixedDecimal<DECIMALS>> for $t {
                 fn partial_cmp(&self, other: &FixedDecimal<DECIMALS>) -> Option<std::cmp::Ordering> {
-                    FixedDecimal::from_integer(*self as i128).partial_cmp(other)
+                    FixedDecimal::from_i128(*self as i128).partial_cmp(other)
                 }
             }
         )*

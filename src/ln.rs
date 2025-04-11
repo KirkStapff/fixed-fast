@@ -93,8 +93,8 @@ mod tests {
     #[test]
     fn test_function() {
         assert_eq!(
-            arctanh_ln::<18, 10>(FixedDecimal::<18>::from_integer(1)),
-            FixedDecimal::<18>::from_integer(0)
+            arctanh_ln::<18, 10>(FixedDecimal::<18>::from_i128(1)),
+            FixedDecimal::<18>::from_i128(0)
         );
         let input = FixedDecimal::<18>::from_str("1.4").unwrap();
         assert_eq!(

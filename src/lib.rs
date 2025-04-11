@@ -18,42 +18,42 @@ mod tests {
 
     #[test]
     fn mul() {
-        let a = FixedDecimal::<9>::from_integer(1);
-        let b = FixedDecimal::<9>::from_integer(2);
+        let a = FixedDecimal::<9>::from_i128(1);
+        let b = FixedDecimal::<9>::from_i128(2);
         let c = a.mul(b);
-        assert_eq!(c.to_integer(), 2);
-        assert_eq!(c * 2_u64, FixedDecimal::<9>::from_integer(4));
+        assert_eq!(c.to_i128(), 2);
+        assert_eq!(c * 2_u64, FixedDecimal::<9>::from_i128(4));
     }
 
     #[test]
     fn div() {
-        let a = FixedDecimal::<9>::from_integer(1);
-        let b = FixedDecimal::<9>::from_integer(2);
+        let a = FixedDecimal::<9>::from_i128(1);
+        let b = FixedDecimal::<9>::from_i128(2);
         let c = a.div(b);
-        assert_eq!(c.to_integer(), 0);
-        let a = FixedDecimal::<9>::from_integer(5);
-        let b = FixedDecimal::<9>::from_integer(3);
+        assert_eq!(c.to_i128(), 0);
+        let a = FixedDecimal::<9>::from_i128(5);
+        let b = FixedDecimal::<9>::from_i128(3);
         let c = a.div(b);
-        assert_eq!(c.to_integer(), 1);
+        assert_eq!(c.to_i128(), 1);
     }
 
     #[test]
     fn div_as_float() {
-        let a = FixedDecimal::<9>::from_integer(1);
-        let b = FixedDecimal::<9>::from_integer(2);
+        let a = FixedDecimal::<9>::from_i128(1);
+        let b = FixedDecimal::<9>::from_i128(2);
         let c = a.div(b);
         assert_eq!(c.to_float(), 0.5);
-        let a = FixedDecimal::<9>::from_integer(5);
-        let b = FixedDecimal::<9>::from_integer(3);
+        let a = FixedDecimal::<9>::from_i128(5);
+        let b = FixedDecimal::<9>::from_i128(3);
         let c = a.div(b);
         assert_eq!(c.to_float(), 1.666666666);
     }
 
     #[test]
     fn squared() {
-        let a = FixedDecimal::<9>::from_integer(2);
+        let a = FixedDecimal::<9>::from_i128(2);
         let b = a.squared();
-        assert_eq!(b.to_integer(), 4);
+        assert_eq!(b.to_i128(), 4);
     }
 
     #[test]
@@ -64,25 +64,25 @@ mod tests {
 
     #[test]
     fn to_integer() {
-        let a = FixedDecimal::<9>::from_integer(1);
-        assert_eq!(a.to_integer(), 1);
+        let a = FixedDecimal::<9>::from_i128(1);
+        assert_eq!(a.to_i128(), 1);
     }
 
     #[test]
     fn sum_vec() {
         let vec = vec![
-            FixedDecimal::<9>::from_integer(1),
-            FixedDecimal::<9>::from_integer(2),
-            FixedDecimal::<9>::from_integer(3),
+            FixedDecimal::<9>::from_i128(1),
+            FixedDecimal::<9>::from_i128(2),
+            FixedDecimal::<9>::from_i128(3),
         ];
         assert_eq!(vec.iter().sum::<FixedDecimal<9>>(), 6);
     }
 
     #[test]
     fn ordering() {
-        let a = FixedDecimal::<9>::from_integer(1);
-        let b = FixedDecimal::<9>::from_integer(2);
-        let c = FixedDecimal::<9>::from_integer(1);
+        let a = FixedDecimal::<9>::from_i128(1);
+        let b = FixedDecimal::<9>::from_i128(2);
+        let c = FixedDecimal::<9>::from_i128(1);
 
         // Test less than/greater than
         assert!(a < b);

@@ -64,7 +64,7 @@ fn sqrt_newton_raphson<const DECIMALS: u32, const APPROX_DEPTH: u32>(
     x: FixedDecimal<DECIMALS>,
 ) -> FixedDecimal<DECIMALS> {
     if x == 0 {
-        return FixedDecimal::<DECIMALS>::from_integer(0);
+        return FixedDecimal::<DECIMALS>::from_i128(0);
     }
     let mut y = x / 2_i64;
     for _ in 0..APPROX_DEPTH {
