@@ -207,6 +207,12 @@ impl<const DECIMALS: u32> PartialEq<FixedDecimal<DECIMALS>> for FixedDecimal<DEC
     }
 }
 
+impl<const DECIMALS: u32> Ord for FixedDecimal<DECIMALS> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.0.cmp(&other.0)
+    }
+}
+
 macro_rules! impl_fixed_ops_with_primitive {
     ($($t:ty),*) => {
         $(

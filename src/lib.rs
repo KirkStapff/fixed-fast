@@ -77,4 +77,33 @@ mod tests {
         ];
         assert_eq!(vec.iter().sum::<FixedDecimal<9>>(), 6);
     }
+
+    #[test]
+    fn ordering() {
+        let a = FixedDecimal::<9>::from_integer(1);
+        let b = FixedDecimal::<9>::from_integer(2);
+        let c = FixedDecimal::<9>::from_integer(1);
+
+        // Test less than/greater than
+        assert!(a < b);
+        assert!(b > a);
+
+        // Test equality
+        assert!(a == c);
+        assert!(!(a != c));
+
+        // Test comparison with integers
+        assert!(a < 3);
+        assert!(b > 1);
+        assert!(a == 1);
+
+        // Test min/max
+        assert_eq!(a.min(b), a);
+        assert_eq!(a.max(b), b);
+
+        // Test sorting
+        let mut vec = vec![b, a, c];
+        vec.sort();
+        assert_eq!(vec, vec![a, c, b]);
+    }
 }
