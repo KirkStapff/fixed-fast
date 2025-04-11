@@ -10,8 +10,8 @@ pub struct LnArcTanhExpansion<const DECIMALS: u32, const APPROX_DEPTH: u32> {}
 impl<const DECIMALS: u32, const APPROX_DEPTH: u32> Function<DECIMALS>
     for LnArcTanhExpansion<DECIMALS, APPROX_DEPTH>
 {
-    fn evaluate(self, x: FixedDecimal<DECIMALS>) -> FixedDecimal<DECIMALS> {
-        arctanh_ln::<DECIMALS, APPROX_DEPTH>(x)
+    fn evaluate(&self, x: FixedDecimal<DECIMALS>) -> FixedDecimal<DECIMALS> {
+        range_reduce_arctanh_ln::<DECIMALS, APPROX_DEPTH>(x)
     }
 }
 
@@ -34,7 +34,12 @@ impl<const DECIMALS: u32, const APPROX_DEPTH: u32>
         step_size: FixedDecimal<DECIMALS>,
     ) -> Self {
         Self {
-            lookup: LookupTable::new(start, end, step_size, arctanh_ln::<DECIMALS, APPROX_DEPTH>),
+            lookup: LookupTable::new(
+                start,
+                end,
+                step_size,
+                range_reduce_arctanh_ln::<DECIMALS, APPROX_DEPTH>,
+            ),
         }
     }
 }
@@ -42,7 +47,7 @@ impl<const DECIMALS: u32, const APPROX_DEPTH: u32>
 impl<const DECIMALS: u32, const APPROX_DEPTH: u32> Function<DECIMALS>
     for LnLinearInterpLookupTable<DECIMALS, APPROX_DEPTH>
 {
-    fn evaluate(self, x: FixedDecimal<DECIMALS>) -> FixedDecimal<DECIMALS> {
+    fn evaluate(&self, x: FixedDecimal<DECIMALS>) -> FixedDecimal<DECIMALS> {
         let index = self.lookup.get_index(x).expect("Index not found");
         let lower_value = self.lookup.step_size() * index + self.lookup.start();
         linear_interpolation(
@@ -55,22 +60,20 @@ impl<const DECIMALS: u32, const APPROX_DEPTH: u32> Function<DECIMALS>
     }
 }
 
-fn arctanh_ln<const DECIMALS: u32, const APPROX_DEPTH: u32>(
+fn range_reduce_arctanh_ln<const DECIMALS: u32, const APPROX_DEPTH: u32>(
     input: FixedDecimal<DECIMALS>,
 ) -> FixedDecimal<DECIMALS> {
-    let ln2 = FixedDecimal::<DECIMALS>::from_str("0.6931471805599453094172321214581765680")
-        .expect("Invalid ln2");
     let mut shift_coef = 0;
     let mut input = input;
     if input == 0 {
         panic!("ln(0) is undefined");
     }
     while input > 2 {
-        input >>= 1;
+        input /= 2_i64;
         shift_coef += 1;
     }
     while input < 1 {
-        input <<= 1;
+        input *= 2;
         shift_coef -= 1;
     }
     // ln(x) = 2 arctanh(x - 1 / x + 1) logarithmic expansion via inverse hyperbolic tangent
@@ -83,7 +86,7 @@ fn arctanh_ln<const DECIMALS: u32, const APPROX_DEPTH: u32>(
         nth_term = nth_term * arctan_term_squared / (2 * n as i64 + 1);
         running_sum += nth_term;
     }
-    2_usize * running_sum + shift_coef as usize * ln2
+    2_usize * running_sum + shift_coef as usize * FixedDecimal::<DECIMALS>::ln2()
 }
 
 #[cfg(test)]
@@ -93,17 +96,17 @@ mod tests {
     #[test]
     fn test_function() {
         assert_eq!(
-            arctanh_ln::<18, 10>(FixedDecimal::<18>::from_i128(1)),
+            range_reduce_arctanh_ln::<18, 10>(FixedDecimal::<18>::from_i128(1)),
             FixedDecimal::<18>::from_i128(0)
         );
         let input = FixedDecimal::<18>::from_str("1.4").unwrap();
         assert_eq!(
-            arctanh_ln::<18, 10>(input),
+            range_reduce_arctanh_ln::<18, 10>(input),
             FixedDecimal::<18>::from_str("0.336436968116129286").unwrap()
         );
         let input = FixedDecimal::<18>::from_str("69.3").unwrap();
         assert_eq!(
-            arctanh_ln::<18, 10>(input),
+            range_reduce_arctanh_ln::<18, 10>(input),
             FixedDecimal::<18>::from_str("4.238444879656876612").unwrap()
         );
     }

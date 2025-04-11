@@ -16,7 +16,7 @@ impl<const DECIMALS: u32, const APPROX_DEPTH: u32> SqrtNewtonRaphson<DECIMALS, A
 impl<const DECIMALS: u32, const APPROX_DEPTH: u32> Function<DECIMALS>
     for SqrtNewtonRaphson<DECIMALS, APPROX_DEPTH>
 {
-    fn evaluate(self, x: FixedDecimal<DECIMALS>) -> FixedDecimal<DECIMALS> {
+    fn evaluate(&self, x: FixedDecimal<DECIMALS>) -> FixedDecimal<DECIMALS> {
         sqrt_newton_raphson::<DECIMALS, APPROX_DEPTH>(x)
     }
 }
@@ -47,7 +47,7 @@ impl<const DECIMALS: u32, const APPROX_DEPTH: u32>
 impl<const DECIMALS: u32, const APPROX_DEPTH: u32> Function<DECIMALS>
     for SqrtLinearInterpLookupTable<DECIMALS, APPROX_DEPTH>
 {
-    fn evaluate(self, x: FixedDecimal<DECIMALS>) -> FixedDecimal<DECIMALS> {
+    fn evaluate(&self, x: FixedDecimal<DECIMALS>) -> FixedDecimal<DECIMALS> {
         let index = self.lookup.get_index(x).expect("Index not found");
         let lower_value = self.lookup.step_size() * index + self.lookup.start();
         linear_interpolation(

@@ -1,4 +1,5 @@
 mod error;
+mod exp;
 mod fixed_decimal;
 mod function;
 mod interpolation;
@@ -105,5 +106,33 @@ mod tests {
         let mut vec = vec![b, a, c];
         vec.sort();
         assert_eq!(vec, vec![a, c, b]);
+    }
+
+    #[test]
+    fn ln2() {
+        let a = FixedDecimal::<18>::ln2();
+        assert_eq!(a.to_string(), "0.693147180559945309");
+    }
+
+    #[test]
+    fn e() {
+        let a = FixedDecimal::<18>::e();
+        assert_eq!(a.to_string(), "2.718281828459045235");
+    }
+
+    #[test]
+    fn pi() {
+        let a = FixedDecimal::<18>::pi();
+        assert_eq!(a.to_string(), "3.141592653589793238");
+    }
+
+    #[test]
+    fn negatives() {
+        let a = FixedDecimal::<18>::from_i128(-10);
+        assert_eq!(a.to_string(), "-10");
+        let b: FixedDecimal<18> = a / 2;
+        assert_eq!(b.to_string(), "-5");
+        let c = FixedDecimal::<18>::from_str("-12.231231").unwrap();
+        assert_eq!(c.to_string(), "-12.231231");
     }
 }
