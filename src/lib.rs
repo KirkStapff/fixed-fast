@@ -11,14 +11,14 @@ mod sqrt;
 
 pub use cdf::{CDFLinearInterpLookupTable, CDFV1};
 pub use exp::{ExpLinearInterpLookupTable, ExpRangeReduceTaylor, ExpV1};
-pub use fixed_decimal::FixedDecimal;
+pub use fixed_decimal::{FixedDecimal, FixedPrecision};
 pub use ln::{LnArcTanhExpansion, LnLinearInterpLookupTable, LnV1};
 pub use pdf::{PDFLinearInterpLookupTable, PDFV1};
 pub use sqrt::{SqrtLinearInterpLookupTable, SqrtNewtonRaphson, SqrtV1};
 
 #[cfg(test)]
 mod tests {
-    use crate::fixed_decimal::{Fixed, FixedDecimal};
+    use crate::fixed_decimal::{FixedDecimal, FixedPrecision};
 
     const ONE_SCALED_INTEGER: i128 = 1000000000;
 
@@ -27,11 +27,11 @@ mod tests {
     #[derive(Debug, PartialEq, Eq, Clone, Copy)]
     struct F18;
 
-    impl Fixed for F9 {
+    impl FixedPrecision for F9 {
         const PRECISION: u32 = 9;
     }
 
-    impl Fixed for F18 {
+    impl FixedPrecision for F18 {
         const PRECISION: u32 = 18;
     }
 

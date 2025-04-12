@@ -1,6 +1,6 @@
-use crate::fixed_decimal::{Fixed, FixedDecimal};
+use crate::fixed_decimal::{FixedPrecision, FixedDecimal};
 
-pub fn linear_interpolation<T: Fixed>(
+pub fn linear_interpolation<T: FixedPrecision>(
     x: FixedDecimal<T>,
     x1: FixedDecimal<T>,
     x2: FixedDecimal<T>,

@@ -1,16 +1,16 @@
 use crate::{
     error::{FixedFastError, Result},
-    fixed_decimal::{Fixed, FixedDecimal},
+    fixed_decimal::{FixedPrecision, FixedDecimal},
 };
 
-pub struct LookupTable<T: Fixed> {
+pub struct LookupTable<T: FixedPrecision> {
     pub table: Vec<FixedDecimal<T>>,
     pub start: FixedDecimal<T>,
     pub end: FixedDecimal<T>,
     pub step_size: FixedDecimal<T>,
 }
 
-impl<T: Fixed> LookupTable<T> {
+impl<T: FixedPrecision> LookupTable<T> {
     pub fn new(
         start: FixedDecimal<T>,
         end: FixedDecimal<T>,

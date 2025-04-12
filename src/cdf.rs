@@ -1,17 +1,17 @@
 use std::marker::PhantomData;
 
 use crate::{
-    FixedDecimal, exp::range_reduce_taylor_exp, fixed_decimal::Fixed, function::Function,
+    FixedDecimal, exp::range_reduce_taylor_exp, fixed_decimal::FixedPrecision, function::Function,
     interpolation::linear_interpolation, lookup_table::LookupTable,
 };
 
 pub type CDFV1<T> = CDFLinearInterpLookupTable<T>;
 
-pub struct CDFBowlingRational<T: Fixed> {
+pub struct CDFBowlingRational<T: FixedPrecision> {
     _precision: PhantomData<T>,
 }
 
-impl<T: Fixed> CDFBowlingRational<T> {
+impl<T: FixedPrecision> CDFBowlingRational<T> {
     pub fn new() -> Self {
         Self {
             _precision: PhantomData,
@@ -19,24 +19,24 @@ impl<T: Fixed> CDFBowlingRational<T> {
     }
 }
 
-impl<T: Fixed> Function<T> for CDFBowlingRational<T> {
+impl<T: FixedPrecision> Function<T> for CDFBowlingRational<T> {
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
         bowling_cdf(x)
     }
 }
 
-pub fn bowling_cdf<T: Fixed>(x: FixedDecimal<T>) -> FixedDecimal<T> {
+pub fn bowling_cdf<T: FixedPrecision>(x: FixedDecimal<T>) -> FixedDecimal<T> {
     let expo_term = FixedDecimal::<T>::from_str("-1.5976").unwrap() * x
         - FixedDecimal::<T>::from_str("0.07056").unwrap() * x.cubed();
     let denominator_exponent = range_reduce_taylor_exp::<T, 10>(expo_term);
     FixedDecimal::<T>::one() / (FixedDecimal::<T>::one() + denominator_exponent)
 }
 
-pub struct CDFLinearInterpLookupTable<T: Fixed> {
+pub struct CDFLinearInterpLookupTable<T: FixedPrecision> {
     lookup: LookupTable<T>,
 }
 
-impl<T: Fixed> CDFLinearInterpLookupTable<T> {
+impl<T: FixedPrecision> CDFLinearInterpLookupTable<T> {
     pub fn new(start: FixedDecimal<T>, end: FixedDecimal<T>, step_size: FixedDecimal<T>) -> Self {
         Self {
             lookup: LookupTable::new(start, end, step_size, bowling_cdf),
@@ -44,7 +44,7 @@ impl<T: Fixed> CDFLinearInterpLookupTable<T> {
     }
 }
 
-impl<T: Fixed> Function<T> for CDFLinearInterpLookupTable<T> {
+impl<T: FixedPrecision> Function<T> for CDFLinearInterpLookupTable<T> {
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
         if x < self.lookup.start() {
             return FixedDecimal::<T>::zero();
@@ -70,7 +70,7 @@ mod tests {
     #[derive(Debug, PartialEq, Eq, Clone, Copy)]
     struct F10;
 
-    impl Fixed for F10 {
+    impl FixedPrecision for F10 {
         const PRECISION: u32 = 10;
     }
 

@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::{
-    fixed_decimal::{Fixed, FixedDecimal},
+    fixed_decimal::{FixedDecimal, FixedPrecision},
     function::Function,
     interpolation::linear_interpolation,
     lookup_table::LookupTable,
@@ -9,17 +9,19 @@ use crate::{
 
 pub type LnV1<T> = LnLinearInterpLookupTable<T, 12>;
 
-pub struct LnArcTanhExpansion<T: Fixed, const APPROX_DEPTH: u32> {
+pub struct LnArcTanhExpansion<T: FixedPrecision, const APPROX_DEPTH: u32> {
     _precision: PhantomData<T>,
 }
 
-impl<T: Fixed, const APPROX_DEPTH: u32> Function<T> for LnArcTanhExpansion<T, APPROX_DEPTH> {
+impl<T: FixedPrecision, const APPROX_DEPTH: u32> Function<T>
+    for LnArcTanhExpansion<T, APPROX_DEPTH>
+{
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
         range_reduce_arctanh_ln::<T, APPROX_DEPTH>(x)
     }
 }
 
-impl<T: Fixed, const APPROX_DEPTH: u32> LnArcTanhExpansion<T, APPROX_DEPTH> {
+impl<T: FixedPrecision, const APPROX_DEPTH: u32> LnArcTanhExpansion<T, APPROX_DEPTH> {
     pub fn new() -> Self {
         Self {
             _precision: PhantomData,
@@ -27,11 +29,11 @@ impl<T: Fixed, const APPROX_DEPTH: u32> LnArcTanhExpansion<T, APPROX_DEPTH> {
     }
 }
 
-pub struct LnLinearInterpLookupTable<T: Fixed, const APPROX_DEPTH: u32> {
+pub struct LnLinearInterpLookupTable<T: FixedPrecision, const APPROX_DEPTH: u32> {
     lookup: LookupTable<T>,
 }
 
-impl<T: Fixed, const APPROX_DEPTH: u32> LnLinearInterpLookupTable<T, APPROX_DEPTH> {
+impl<T: FixedPrecision, const APPROX_DEPTH: u32> LnLinearInterpLookupTable<T, APPROX_DEPTH> {
     pub fn new(start: FixedDecimal<T>, end: FixedDecimal<T>, step_size: FixedDecimal<T>) -> Self {
         Self {
             lookup: LookupTable::new(
@@ -44,7 +46,9 @@ impl<T: Fixed, const APPROX_DEPTH: u32> LnLinearInterpLookupTable<T, APPROX_DEPT
     }
 }
 
-impl<T: Fixed, const APPROX_DEPTH: u32> Function<T> for LnLinearInterpLookupTable<T, APPROX_DEPTH> {
+impl<T: FixedPrecision, const APPROX_DEPTH: u32> Function<T>
+    for LnLinearInterpLookupTable<T, APPROX_DEPTH>
+{
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
         let index = self.lookup.get_index(x).expect("Index not found");
         let lower_value = self.lookup.step_size() * index + self.lookup.start();
@@ -58,7 +62,7 @@ impl<T: Fixed, const APPROX_DEPTH: u32> Function<T> for LnLinearInterpLookupTabl
     }
 }
 
-fn range_reduce_arctanh_ln<T: Fixed, const APPROX_DEPTH: u32>(
+fn range_reduce_arctanh_ln<T: FixedPrecision, const APPROX_DEPTH: u32>(
     input: FixedDecimal<T>,
 ) -> FixedDecimal<T> {
     let mut shift_coef = 0;
@@ -102,7 +106,7 @@ mod tests {
     #[derive(Debug, PartialEq, Eq, Clone, Copy)]
     struct F18;
 
-    impl Fixed for F18 {
+    impl FixedPrecision for F18 {
         const PRECISION: u32 = 18;
     }
 

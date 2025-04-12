@@ -1,16 +1,16 @@
 use std::marker::PhantomData;
 
 use crate::{
-    FixedDecimal, fixed_decimal::Fixed, function::Function, interpolation::linear_interpolation,
+    FixedDecimal, fixed_decimal::FixedPrecision, function::Function, interpolation::linear_interpolation,
     lookup_table::LookupTable,
 };
 
 pub type ExpV1<T> = ExpRangeReduceTaylor<T, 10>;
-pub struct ExpRangeReduceTaylor<T: Fixed, const TAYLOR_ORDER: u32> {
+pub struct ExpRangeReduceTaylor<T: FixedPrecision, const TAYLOR_ORDER: u32> {
     _precision: PhantomData<T>,
 }
 
-impl<T: Fixed, const TAYLOR_ORDER: u32> ExpRangeReduceTaylor<T, TAYLOR_ORDER> {
+impl<T: FixedPrecision, const TAYLOR_ORDER: u32> ExpRangeReduceTaylor<T, TAYLOR_ORDER> {
     pub fn new() -> Self {
         Self {
             _precision: PhantomData,
@@ -18,17 +18,17 @@ impl<T: Fixed, const TAYLOR_ORDER: u32> ExpRangeReduceTaylor<T, TAYLOR_ORDER> {
     }
 }
 
-impl<T: Fixed, const TAYLOR_ORDER: u32> Function<T> for ExpRangeReduceTaylor<T, TAYLOR_ORDER> {
+impl<T: FixedPrecision, const TAYLOR_ORDER: u32> Function<T> for ExpRangeReduceTaylor<T, TAYLOR_ORDER> {
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
         range_reduce_taylor_exp::<T, TAYLOR_ORDER>(x)
     }
 }
 
-pub struct ExpLinearInterpLookupTable<T: Fixed, const TAYLOR_ORDER: u32> {
+pub struct ExpLinearInterpLookupTable<T: FixedPrecision, const TAYLOR_ORDER: u32> {
     lookup: LookupTable<T>,
 }
 
-impl<T: Fixed, const TAYLOR_ORDER: u32> ExpLinearInterpLookupTable<T, TAYLOR_ORDER> {
+impl<T: FixedPrecision, const TAYLOR_ORDER: u32> ExpLinearInterpLookupTable<T, TAYLOR_ORDER> {
     pub fn new(start: FixedDecimal<T>, end: FixedDecimal<T>, step_size: FixedDecimal<T>) -> Self {
         Self {
             lookup: LookupTable::new(
@@ -41,7 +41,7 @@ impl<T: Fixed, const TAYLOR_ORDER: u32> ExpLinearInterpLookupTable<T, TAYLOR_ORD
     }
 }
 
-impl<T: Fixed, const TAYLOR_ORDER: u32> Function<T>
+impl<T: FixedPrecision, const TAYLOR_ORDER: u32> Function<T>
     for ExpLinearInterpLookupTable<T, TAYLOR_ORDER>
 {
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
@@ -57,7 +57,7 @@ impl<T: Fixed, const TAYLOR_ORDER: u32> Function<T>
     }
 }
 
-pub fn range_reduce_taylor_exp<T: Fixed, const TAYLOR_ORDER: u32>(
+pub fn range_reduce_taylor_exp<T: FixedPrecision, const TAYLOR_ORDER: u32>(
     x: FixedDecimal<T>,
 ) -> FixedDecimal<T> {
     let ln2 = FixedDecimal::<T>::ln2();
@@ -83,7 +83,7 @@ mod tests {
     #[derive(Debug, PartialEq, Eq, Clone, Copy)]
     struct F10;
 
-    impl Fixed for F10 {
+    impl FixedPrecision for F10 {
         const PRECISION: u32 = 10;
     }
 

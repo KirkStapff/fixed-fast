@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::{
-    fixed_decimal::{Fixed, FixedDecimal},
+    fixed_decimal::{FixedPrecision, FixedDecimal},
     function::Function,
     interpolation::linear_interpolation,
     lookup_table::LookupTable,
@@ -9,11 +9,11 @@ use crate::{
 
 pub type SqrtV1<T> = SqrtLinearInterpLookupTable<T, 12>;
 
-pub struct SqrtNewtonRaphson<T: Fixed, const APPROX_DEPTH: u32> {
+pub struct SqrtNewtonRaphson<T: FixedPrecision, const APPROX_DEPTH: u32> {
     _precision: PhantomData<T>,
 }
 
-impl<T: Fixed, const APPROX_DEPTH: u32> SqrtNewtonRaphson<T, APPROX_DEPTH> {
+impl<T: FixedPrecision, const APPROX_DEPTH: u32> SqrtNewtonRaphson<T, APPROX_DEPTH> {
     pub fn new() -> Self {
         Self {
             _precision: PhantomData,
@@ -21,17 +21,17 @@ impl<T: Fixed, const APPROX_DEPTH: u32> SqrtNewtonRaphson<T, APPROX_DEPTH> {
     }
 }
 
-impl<T: Fixed, const APPROX_DEPTH: u32> Function<T> for SqrtNewtonRaphson<T, APPROX_DEPTH> {
+impl<T: FixedPrecision, const APPROX_DEPTH: u32> Function<T> for SqrtNewtonRaphson<T, APPROX_DEPTH> {
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
         sqrt_newton_raphson::<T, APPROX_DEPTH>(x)
     }
 }
 
-pub struct SqrtLinearInterpLookupTable<T: Fixed, const APPROX_DEPTH: u32> {
+pub struct SqrtLinearInterpLookupTable<T: FixedPrecision, const APPROX_DEPTH: u32> {
     lookup: LookupTable<T>,
 }
 
-impl<T: Fixed, const APPROX_DEPTH: u32> SqrtLinearInterpLookupTable<T, APPROX_DEPTH> {
+impl<T: FixedPrecision, const APPROX_DEPTH: u32> SqrtLinearInterpLookupTable<T, APPROX_DEPTH> {
     pub fn new(start: FixedDecimal<T>, end: FixedDecimal<T>, step_size: FixedDecimal<T>) -> Self {
         Self {
             lookup: LookupTable::new(
@@ -44,7 +44,7 @@ impl<T: Fixed, const APPROX_DEPTH: u32> SqrtLinearInterpLookupTable<T, APPROX_DE
     }
 }
 
-impl<T: Fixed, const APPROX_DEPTH: u32> Function<T>
+impl<T: FixedPrecision, const APPROX_DEPTH: u32> Function<T>
     for SqrtLinearInterpLookupTable<T, APPROX_DEPTH>
 {
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
@@ -60,7 +60,7 @@ impl<T: Fixed, const APPROX_DEPTH: u32> Function<T>
     }
 }
 
-pub fn sqrt_newton_raphson<T: Fixed, const APPROX_DEPTH: u32>(
+pub fn sqrt_newton_raphson<T: FixedPrecision, const APPROX_DEPTH: u32>(
     x: FixedDecimal<T>,
 ) -> FixedDecimal<T> {
     if x == 0 {
@@ -79,7 +79,7 @@ mod tests {
     #[derive(Debug, PartialEq, Eq, Clone, Copy)]
     struct F18;
 
-    impl Fixed for F18 {
+    impl FixedPrecision for F18 {
         const PRECISION: u32 = 18;
     }
 
