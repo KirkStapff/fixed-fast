@@ -1,51 +1,53 @@
+use std::marker::PhantomData;
+
 use crate::{
-    FixedDecimal, exp::range_reduce_taylor_exp, function::Function,
+    FixedDecimal, exp::range_reduce_taylor_exp, fixed_decimal::Fixed, function::Function,
     interpolation::linear_interpolation, lookup_table::LookupTable, sqrt::sqrt_newton_raphson,
 };
 
-pub type PDFV1 = PDFLinearInterpLookupTable<10>;
+pub type PDFV1<T> = PDFLinearInterpLookupTable<T>;
 
-pub struct PDF<const DECIMALS: u32> {}
+pub struct PDF<T: Fixed> {
+    _precision: PhantomData<T>,
+}
 
-impl<const DECIMALS: u32> PDF<DECIMALS> {
+impl<T: Fixed> PDF<T> {
     pub fn new() -> Self {
-        Self {}
-    }
-}
-
-impl<const DECIMALS: u32> Function<DECIMALS> for PDF<DECIMALS> {
-    fn evaluate(&self, x: FixedDecimal<DECIMALS>) -> FixedDecimal<DECIMALS> {
-        pdf(x)
-    }
-}
-
-pub fn pdf<const DECIMALS: u32>(x: FixedDecimal<DECIMALS>) -> FixedDecimal<DECIMALS> {
-    let coef = 1 / sqrt_newton_raphson::<DECIMALS, 20>(2 * FixedDecimal::<DECIMALS>::pi());
-    let exponent = -x.squared() / 2;
-    let result = coef * range_reduce_taylor_exp::<DECIMALS, 20>(exponent);
-    result
-}
-
-pub struct PDFLinearInterpLookupTable<const DECIMALS: u32> {
-    lookup: LookupTable<DECIMALS>,
-}
-
-impl<const DECIMALS: u32> PDFLinearInterpLookupTable<DECIMALS> {
-    pub fn new(
-        start: FixedDecimal<DECIMALS>,
-        end: FixedDecimal<DECIMALS>,
-        step_size: FixedDecimal<DECIMALS>,
-    ) -> Self {
         Self {
-            lookup: LookupTable::new(start, end, step_size, pdf::<DECIMALS>),
+            _precision: PhantomData,
         }
     }
 }
 
-impl<const DECIMALS: u32> Function<DECIMALS> for PDFLinearInterpLookupTable<DECIMALS> {
-    fn evaluate(&self, x: FixedDecimal<DECIMALS>) -> FixedDecimal<DECIMALS> {
+impl<T: Fixed> Function<T> for PDF<T> {
+    fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
+        pdf(x)
+    }
+}
+
+pub fn pdf<T: Fixed>(x: FixedDecimal<T>) -> FixedDecimal<T> {
+    let coef = 1 / sqrt_newton_raphson::<T, 20>(2 * FixedDecimal::<T>::pi());
+    let exponent = -x.squared() / 2;
+    let result = coef * range_reduce_taylor_exp::<T, 20>(exponent);
+    result
+}
+
+pub struct PDFLinearInterpLookupTable<T: Fixed> {
+    lookup: LookupTable<T>,
+}
+
+impl<T: Fixed> PDFLinearInterpLookupTable<T> {
+    pub fn new(start: FixedDecimal<T>, end: FixedDecimal<T>, step_size: FixedDecimal<T>) -> Self {
+        Self {
+            lookup: LookupTable::new(start, end, step_size, pdf::<T>),
+        }
+    }
+}
+
+impl<T: Fixed> Function<T> for PDFLinearInterpLookupTable<T> {
+    fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
         if x < self.lookup.start() || x > self.lookup.end() {
-            return FixedDecimal::<DECIMALS>::zero();
+            return FixedDecimal::<T>::zero();
         }
         let index = self.lookup.get_index(x).expect("Index not found");
         let lower_value = self.lookup.step_size() * index + self.lookup.start();
@@ -71,34 +73,48 @@ impl<const DECIMALS: u32> Function<DECIMALS> for PDFLinearInterpLookupTable<DECI
 mod tests {
     use super::*;
 
+    #[derive(Debug, PartialEq, Eq, Clone, Copy)]
+    struct F10;
+
+    impl Fixed for F10 {
+        const PRECISION: u32 = 10;
+    }
+
+    #[derive(Debug, PartialEq, Eq, Clone, Copy)]
+    struct F14;
+
+    impl Fixed for F14 {
+        const PRECISION: u32 = 14;
+    }
+
     #[test]
     fn test_pdf() {
         let pdf = PDF::new();
-        let x = FixedDecimal::<10>::from_str("0").unwrap();
+        let x = FixedDecimal::<F10>::from_str("0").unwrap();
         assert_eq!(
             pdf.evaluate(x),
-            FixedDecimal::<10>::from_str("0.3989422804").unwrap()
+            FixedDecimal::<F10>::from_str("0.3989422804").unwrap()
         );
     }
 
     #[test]
     fn test_pdf_linear_interp_lookup_table() {
-        let pdf = PDFLinearInterpLookupTable::<14>::new(
-            FixedDecimal::<14>::from_str("-4").unwrap(),
-            FixedDecimal::<14>::from_str("4").unwrap(),
-            FixedDecimal::<14>::from_str("0.00001").unwrap(),
+        let pdf = PDFLinearInterpLookupTable::<F14>::new(
+            FixedDecimal::<F14>::from_str("-4").unwrap(),
+            FixedDecimal::<F14>::from_str("4").unwrap(),
+            FixedDecimal::<F14>::from_str("0.00001").unwrap(),
         );
         assert_eq!(
-            pdf.evaluate(FixedDecimal::<14>::from_str("-1.12313512").unwrap()),
-            FixedDecimal::<14>::from_str("0.21232125827745").unwrap()
+            pdf.evaluate(FixedDecimal::<F14>::from_str("-1.12313512").unwrap()),
+            FixedDecimal::<F14>::from_str("0.21232125827745").unwrap()
         );
         assert_eq!(
-            pdf.evaluate(FixedDecimal::<14>::from_str("0").unwrap()),
-            FixedDecimal::<14>::from_str("0.39894228040143").unwrap()
+            pdf.evaluate(FixedDecimal::<F14>::from_str("0").unwrap()),
+            FixedDecimal::<F14>::from_str("0.39894228040143").unwrap()
         );
         assert_eq!(
-            pdf.evaluate(FixedDecimal::<14>::from_str("2.3463434").unwrap()),
-            FixedDecimal::<14>::from_str("0.02543568401209").unwrap()
+            pdf.evaluate(FixedDecimal::<F14>::from_str("2.3463434").unwrap()),
+            FixedDecimal::<F14>::from_str("0.02543568401209").unwrap()
         );
     }
 }

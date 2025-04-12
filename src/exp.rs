@@ -1,52 +1,50 @@
+use std::marker::PhantomData;
+
 use crate::{
-    FixedDecimal, function::Function, interpolation::linear_interpolation,
+    FixedDecimal, fixed_decimal::Fixed, function::Function, interpolation::linear_interpolation,
     lookup_table::LookupTable,
 };
 
-pub type ExpV1<const DECIMALS: u32> = ExpRangeReduceTaylor<DECIMALS, 10>;
-pub struct ExpRangeReduceTaylor<const DECIMALS: u32, const TAYLOR_ORDER: u32> {}
+pub type ExpV1<T> = ExpRangeReduceTaylor<T, 10>;
+pub struct ExpRangeReduceTaylor<T: Fixed, const TAYLOR_ORDER: u32> {
+    _precision: PhantomData<T>,
+}
 
-impl<const DECIMALS: u32, const TAYLOR_ORDER: u32> ExpRangeReduceTaylor<DECIMALS, TAYLOR_ORDER> {
+impl<T: Fixed, const TAYLOR_ORDER: u32> ExpRangeReduceTaylor<T, TAYLOR_ORDER> {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            _precision: PhantomData,
+        }
     }
 }
 
-impl<const DECIMALS: u32, const TAYLOR_ORDER: u32> Function<DECIMALS>
-    for ExpRangeReduceTaylor<DECIMALS, TAYLOR_ORDER>
-{
-    fn evaluate(&self, x: FixedDecimal<DECIMALS>) -> FixedDecimal<DECIMALS> {
-        range_reduce_taylor_exp::<DECIMALS, TAYLOR_ORDER>(x)
+impl<T: Fixed, const TAYLOR_ORDER: u32> Function<T> for ExpRangeReduceTaylor<T, TAYLOR_ORDER> {
+    fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
+        range_reduce_taylor_exp::<T, TAYLOR_ORDER>(x)
     }
 }
 
-pub struct ExpLinearInterpLookupTable<const DECIMALS: u32, const TAYLOR_ORDER: u32> {
-    lookup: LookupTable<DECIMALS>,
+pub struct ExpLinearInterpLookupTable<T: Fixed, const TAYLOR_ORDER: u32> {
+    lookup: LookupTable<T>,
 }
 
-impl<const DECIMALS: u32, const TAYLOR_ORDER: u32>
-    ExpLinearInterpLookupTable<DECIMALS, TAYLOR_ORDER>
-{
-    pub fn new(
-        start: FixedDecimal<DECIMALS>,
-        end: FixedDecimal<DECIMALS>,
-        step_size: FixedDecimal<DECIMALS>,
-    ) -> Self {
+impl<T: Fixed, const TAYLOR_ORDER: u32> ExpLinearInterpLookupTable<T, TAYLOR_ORDER> {
+    pub fn new(start: FixedDecimal<T>, end: FixedDecimal<T>, step_size: FixedDecimal<T>) -> Self {
         Self {
             lookup: LookupTable::new(
                 start,
                 end,
                 step_size,
-                range_reduce_taylor_exp::<DECIMALS, TAYLOR_ORDER>,
+                range_reduce_taylor_exp::<T, TAYLOR_ORDER>,
             ),
         }
     }
 }
 
-impl<const DECIMALS: u32, const TAYLOR_ORDER: u32> Function<DECIMALS>
-    for ExpLinearInterpLookupTable<DECIMALS, TAYLOR_ORDER>
+impl<T: Fixed, const TAYLOR_ORDER: u32> Function<T>
+    for ExpLinearInterpLookupTable<T, TAYLOR_ORDER>
 {
-    fn evaluate(&self, x: FixedDecimal<DECIMALS>) -> FixedDecimal<DECIMALS> {
+    fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
         let index = self.lookup.get_index(x).expect("Index not found");
         let lower_value = self.lookup.step_size() * index + self.lookup.start();
         linear_interpolation(
@@ -59,20 +57,22 @@ impl<const DECIMALS: u32, const TAYLOR_ORDER: u32> Function<DECIMALS>
     }
 }
 
-pub fn range_reduce_taylor_exp<const DECIMALS: u32, const TAYLOR_ORDER: u32>(
-    x: FixedDecimal<DECIMALS>,
-) -> FixedDecimal<DECIMALS> {
-    let ln2 = FixedDecimal::<DECIMALS>::ln2();
+pub fn range_reduce_taylor_exp<T: Fixed, const TAYLOR_ORDER: u32>(
+    x: FixedDecimal<T>,
+) -> FixedDecimal<T> {
+    let ln2 = FixedDecimal::<T>::ln2();
+    println!("x: {} ln2: {}", x.to_f64(), ln2.to_f64());
     let k = (x / ln2).floor_i128();
     let r = x - ln2 * FixedDecimal::from_i128(k);
 
-    let mut term = FixedDecimal::<DECIMALS>::from_i128(1);
+    let mut term = FixedDecimal::<T>::from_i128(1);
     let mut result = term;
     for i in 1..=TAYLOR_ORDER {
         term = term * r / i;
         result += term;
     }
-    let range_gain = FixedDecimal::<DECIMALS>::two_pow_k(k as i32);
+    println!("k: {}", k);
+    let range_gain = FixedDecimal::<T>::two_pow_k(k as i32);
     result * range_gain
 }
 
@@ -80,39 +80,46 @@ pub fn range_reduce_taylor_exp<const DECIMALS: u32, const TAYLOR_ORDER: u32>(
 mod tests {
     use super::*;
 
+    #[derive(Debug, PartialEq, Eq, Clone, Copy)]
+    struct F10;
+
+    impl Fixed for F10 {
+        const PRECISION: u32 = 10;
+    }
+
     #[test]
     fn test_range_reduce_taylor_exp() {
-        let x = FixedDecimal::<10>::from_str("1.0").unwrap();
+        let x = FixedDecimal::<F10>::from_str("1.0").unwrap();
         assert_eq!(
-            range_reduce_taylor_exp::<10, 10>(x),
-            FixedDecimal::<10>::from_str("2.7182818278").unwrap()
+            range_reduce_taylor_exp::<F10, 10>(x),
+            FixedDecimal::<F10>::from_str("2.7182818278").unwrap()
         );
-        let x = FixedDecimal::<10>::from_str("-1.231231").unwrap();
+        let x = FixedDecimal::<F10>::from_str("-1.231231").unwrap();
         assert_eq!(
-            range_reduce_taylor_exp::<10, 20>(x),
-            FixedDecimal::<10>::from_str("0.291932986891").unwrap()
+            range_reduce_taylor_exp::<F10, 20>(x),
+            FixedDecimal::<F10>::from_str("0.291932986891").unwrap()
         );
-        let x = FixedDecimal::<10>::from_str("0").unwrap();
+        let x = FixedDecimal::<F10>::from_str("0").unwrap();
         assert_eq!(
-            range_reduce_taylor_exp::<10, 20>(x),
-            FixedDecimal::<10>::from_str("1").unwrap()
+            range_reduce_taylor_exp::<F10, 20>(x),
+            FixedDecimal::<F10>::from_str("1").unwrap()
         );
     }
 
     #[test]
     fn test_exp_linear_interp_lookup_table() {
-        let table = ExpLinearInterpLookupTable::<10, 10>::new(
-            FixedDecimal::<10>::from_str("-10").unwrap(),
-            FixedDecimal::<10>::from_str("10").unwrap(),
-            FixedDecimal::<10>::from_str("0.00001").unwrap(),
+        let table = ExpLinearInterpLookupTable::<F10, 10>::new(
+            FixedDecimal::<F10>::from_str("-10").unwrap(),
+            FixedDecimal::<F10>::from_str("10").unwrap(),
+            FixedDecimal::<F10>::from_str("0.00001").unwrap(),
         );
         assert_eq!(
-            table.evaluate(FixedDecimal::<10>::from_str("-1.12313512").unwrap()),
-            FixedDecimal::<10>::from_str("0.3252584700").unwrap()
+            table.evaluate(FixedDecimal::<F10>::from_str("-1.12313512").unwrap()),
+            FixedDecimal::<F10>::from_str("0.3252584700").unwrap()
         );
         assert_eq!(
-            table.evaluate(FixedDecimal::<10>::from_str("2").unwrap()),
-            FixedDecimal::<10>::from_str("7.3890560972").unwrap()
+            table.evaluate(FixedDecimal::<F10>::from_str("2").unwrap()),
+            FixedDecimal::<F10>::from_str("7.3890560972").unwrap()
         );
     }
 }

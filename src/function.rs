@@ -1,5 +1,5 @@
-use crate::fixed_decimal::FixedDecimal;
+use crate::fixed_decimal::{Fixed, FixedDecimal};
 
-pub trait Function<const DECIMALS: u32> {
-    fn evaluate(&self, x: FixedDecimal<DECIMALS>) -> FixedDecimal<DECIMALS>;
+pub trait Function<T: Fixed> {
+    fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T>;
 }

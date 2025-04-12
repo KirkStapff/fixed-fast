@@ -1,21 +1,21 @@
 use crate::{
     error::{FixedFastError, Result},
-    fixed_decimal::FixedDecimal,
+    fixed_decimal::{Fixed, FixedDecimal},
 };
 
-pub struct LookupTable<const DECIMALS: u32> {
-    pub table: Vec<FixedDecimal<DECIMALS>>,
-    pub start: FixedDecimal<DECIMALS>,
-    pub end: FixedDecimal<DECIMALS>,
-    pub step_size: FixedDecimal<DECIMALS>,
+pub struct LookupTable<T: Fixed> {
+    pub table: Vec<FixedDecimal<T>>,
+    pub start: FixedDecimal<T>,
+    pub end: FixedDecimal<T>,
+    pub step_size: FixedDecimal<T>,
 }
 
-impl<const DECIMALS: u32> LookupTable<DECIMALS> {
+impl<T: Fixed> LookupTable<T> {
     pub fn new(
-        start: FixedDecimal<DECIMALS>,
-        end: FixedDecimal<DECIMALS>,
-        step_size: FixedDecimal<DECIMALS>,
-        f: impl Fn(FixedDecimal<DECIMALS>) -> FixedDecimal<DECIMALS>,
+        start: FixedDecimal<T>,
+        end: FixedDecimal<T>,
+        step_size: FixedDecimal<T>,
+        f: impl Fn(FixedDecimal<T>) -> FixedDecimal<T>,
     ) -> Self {
         let table_size = ((end.sub(start)).div(step_size)).to_i128() as usize;
         let mut table = Vec::new();
@@ -31,7 +31,7 @@ impl<const DECIMALS: u32> LookupTable<DECIMALS> {
         }
     }
 
-    pub fn get_index(&self, x: FixedDecimal<DECIMALS>) -> Result<usize> {
+    pub fn get_index(&self, x: FixedDecimal<T>) -> Result<usize> {
         if x < self.start || x > self.end {
             return Err(FixedFastError::OutOfRange(x.to_i128() as usize));
         }
@@ -39,15 +39,15 @@ impl<const DECIMALS: u32> LookupTable<DECIMALS> {
         Ok(index)
     }
 
-    pub fn step_size(&self) -> FixedDecimal<DECIMALS> {
+    pub fn step_size(&self) -> FixedDecimal<T> {
         self.step_size
     }
 
-    pub fn start(&self) -> FixedDecimal<DECIMALS> {
+    pub fn start(&self) -> FixedDecimal<T> {
         self.start
     }
 
-    pub fn end(&self) -> FixedDecimal<DECIMALS> {
+    pub fn end(&self) -> FixedDecimal<T> {
         self.end
     }
 }
