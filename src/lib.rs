@@ -1,3 +1,4 @@
+mod cdf;
 mod error;
 mod exp;
 mod fixed_decimal;
@@ -5,11 +6,15 @@ mod function;
 mod interpolation;
 mod ln;
 mod lookup_table;
+mod pdf;
 mod sqrt;
 
+pub use cdf::{CDFLinearInterpLookupTable, CDFV1};
+pub use exp::{ExpLinearInterpLookupTable, ExpRangeReduceTaylor, ExpV1};
 pub use fixed_decimal::FixedDecimal;
-pub use ln::{Ln, LnArcTanhExpansion, LnLinearInterpLookupTable};
-pub use sqrt::{Sqrt, SqrtLinearInterpLookupTable, SqrtNewtonRaphson};
+pub use ln::{LnArcTanhExpansion, LnLinearInterpLookupTable, LnV1};
+pub use pdf::{PDFLinearInterpLookupTable, PDFV1};
+pub use sqrt::{SqrtLinearInterpLookupTable, SqrtNewtonRaphson, SqrtV1};
 
 #[cfg(test)]
 mod tests {

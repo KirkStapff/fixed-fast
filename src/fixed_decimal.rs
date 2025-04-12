@@ -4,7 +4,7 @@ use std::{
     cmp::Ordering,
     iter::Sum,
     ops::{
-        Add, AddAssign, Div, DivAssign, Mul, MulAssign, Shl, ShlAssign, Shr, ShrAssign, Sub,
+        Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Shl, ShlAssign, Shr, ShrAssign, Sub,
         SubAssign,
     },
 };
@@ -145,6 +145,10 @@ impl<const DECIMALS: u32> FixedDecimal<DECIMALS> {
         }
     }
 
+    pub fn neg(self) -> Self {
+        Self(-self.0)
+    }
+
     pub fn add(self, right: Self) -> Self {
         Self(self.0 + right.0)
     }
@@ -177,6 +181,10 @@ impl<const DECIMALS: u32> FixedDecimal<DECIMALS> {
         Self(self.0 * self.0 / Self::scale())
     }
 
+    pub fn cubed(self) -> Self {
+        Self(self.0 * self.0 / Self::scale() * self.0 / Self::scale())
+    }
+
     pub fn raw_value(self) -> i128 {
         self.0
     }
@@ -194,9 +202,10 @@ impl<const DECIMALS: u32> fmt::Display for FixedDecimal<DECIMALS> {
 
 impl<const DECIMALS: u32> fmt::Debug for FixedDecimal<DECIMALS> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}.{}", self.to_i128(), self.0 % Self::scale())
+        write!(f, "FixedDecimal<{}>({})", DECIMALS, self.to_string())
     }
 }
+
 impl<const DECIMALS: u32> Add for FixedDecimal<DECIMALS> {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
@@ -222,6 +231,13 @@ impl<const DECIMALS: u32> Div for FixedDecimal<DECIMALS> {
     type Output = Self;
     fn div(self, rhs: Self) -> Self::Output {
         self.div(rhs)
+    }
+}
+
+impl<const DECIMALS: u32> Neg for FixedDecimal<DECIMALS> {
+    type Output = Self;
+    fn neg(self) -> Self::Output {
+        self.neg()
     }
 }
 

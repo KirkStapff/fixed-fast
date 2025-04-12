@@ -3,7 +3,7 @@ use crate::{
     lookup_table::LookupTable,
 };
 
-pub type Sqrt<const DECIMALS: u32> = SqrtLinearInterpLookupTable<DECIMALS, 12>;
+pub type SqrtV1<const DECIMALS: u32> = SqrtLinearInterpLookupTable<DECIMALS, 12>;
 
 pub struct SqrtNewtonRaphson<const DECIMALS: u32, const APPROX_DEPTH: u32> {}
 
@@ -60,7 +60,7 @@ impl<const DECIMALS: u32, const APPROX_DEPTH: u32> Function<DECIMALS>
     }
 }
 
-fn sqrt_newton_raphson<const DECIMALS: u32, const APPROX_DEPTH: u32>(
+pub fn sqrt_newton_raphson<const DECIMALS: u32, const APPROX_DEPTH: u32>(
     x: FixedDecimal<DECIMALS>,
 ) -> FixedDecimal<DECIMALS> {
     if x == 0 {
