@@ -51,22 +51,13 @@ impl<T: FixedPrecision> Function<T> for PDFLinearInterpLookupTable<T> {
         }
         let index = self.lookup.get_index(x).expect("Index not found");
         let lower_value = self.lookup.step_size() * index + self.lookup.start();
-        println!(
-            "X: {} PDF Index: {} Lower Value: {} PDF: {} PDF+1: {}",
-            x,
-            index,
-            lower_value,
-            self.lookup.table[index],
-            self.lookup.table[index + 1]
-        );
-        let result = linear_interpolation(
+        linear_interpolation(
             x,
             lower_value,
             lower_value + self.lookup.step_size(),
             self.lookup.table[index],
             self.lookup.table[index + 1],
-        );
-        result
+        )
     }
 }
 

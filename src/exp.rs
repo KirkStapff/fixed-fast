@@ -63,7 +63,6 @@ pub fn range_reduce_taylor_exp<T: FixedPrecision, const TAYLOR_ORDER: u32>(
     x: FixedDecimal<T>,
 ) -> FixedDecimal<T> {
     let ln2 = FixedDecimal::<T>::ln2();
-    println!("x: {} ln2: {}", x.to_f64(), ln2.to_f64());
     let k = (x / ln2).floor_i128();
     let r = x - ln2 * FixedDecimal::from_i128(k);
 
@@ -73,9 +72,7 @@ pub fn range_reduce_taylor_exp<T: FixedPrecision, const TAYLOR_ORDER: u32>(
         term = term * r / i;
         result += term;
     }
-    println!("k: {}", k);
-    let range_gain = FixedDecimal::<T>::two_pow_k(k as i32);
-    result * range_gain
+    result * FixedDecimal::<T>::two_pow_k(k as i32)
 }
 
 #[cfg(test)]

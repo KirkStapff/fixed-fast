@@ -81,22 +81,14 @@ fn range_reduce_arctanh_ln<T: FixedPrecision, const APPROX_DEPTH: u32>(
     // ln(x) = 2 arctanh(x - 1 / x + 1) logarithmic expansion via inverse hyperbolic tangent
 
     let arctan_term: FixedDecimal<T> = (input - 1) / (input + 1);
-    println!("arctan_term: {}", arctan_term.to_f64());
     let arctan_term_squared = arctan_term * arctan_term;
-    println!("arctan_term_squared: {}", arctan_term_squared.to_f64());
     let mut nth_term = arctan_term;
     let mut running_sum = nth_term;
     for n in 1..APPROX_DEPTH {
         nth_term = nth_term * arctan_term_squared / (2 * n as i64 + 1);
-        println!("nth_term: {}", nth_term.to_f64());
         running_sum += nth_term;
     }
-    let shift: FixedDecimal<T> = FixedDecimal::<T>::ln2() * shift_coef;
-    println!("shift: {}", shift.to_f64());
-    println!("running_sum: {} ", running_sum.to_f64());
-    let result: FixedDecimal<T> = running_sum * 2 + shift;
-    println!("result: {}", result.to_string());
-    result
+    running_sum * 2 + FixedDecimal::<T>::ln2() * shift_coef
 }
 
 #[cfg(test)]

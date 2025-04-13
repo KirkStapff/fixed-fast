@@ -61,7 +61,6 @@ impl<T: FixedPrecision> FixedDecimal<T> {
     }
 
     pub fn two_pow_k(k: i32) -> Self {
-        println!("k: {}", k);
         if k > 0 {
             FixedDecimal::one() << k
         } else if k < 0 {

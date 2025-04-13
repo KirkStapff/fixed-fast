@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::{
-    fixed_decimal::{FixedPrecision, FixedDecimal},
+    fixed_decimal::{FixedDecimal, FixedPrecision},
     function::Function,
     interpolation::linear_interpolation,
     lookup_table::LookupTable,
@@ -21,7 +21,9 @@ impl<T: FixedPrecision, const APPROX_DEPTH: u32> SqrtNewtonRaphson<T, APPROX_DEP
     }
 }
 
-impl<T: FixedPrecision, const APPROX_DEPTH: u32> Function<T> for SqrtNewtonRaphson<T, APPROX_DEPTH> {
+impl<T: FixedPrecision, const APPROX_DEPTH: u32> Function<T>
+    for SqrtNewtonRaphson<T, APPROX_DEPTH>
+{
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
         sqrt_newton_raphson::<T, APPROX_DEPTH>(x)
     }
