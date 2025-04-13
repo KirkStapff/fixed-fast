@@ -83,7 +83,7 @@ impl<T: FixedPrecision> FixedDecimal<T> {
         Self(x * Self::scale(), std::marker::PhantomData)
     }
 
-    pub fn from_raw(x: i128) -> Self {
+    pub const fn from_raw(x: i128) -> Self {
         Self(x, std::marker::PhantomData)
     }
 
