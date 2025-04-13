@@ -9,7 +9,7 @@ mod lookup_table;
 mod pdf;
 mod sqrt;
 
-pub use cdf::{CDFLinearInterpLookupTable, CDFV1};
+pub use cdf::{CDFBowlingRational, CDFLinearInterpLookupTable, CDFV1};
 pub use exp::{ExpLinearInterpLookupTable, ExpRangeReduceTaylor, ExpV1};
 pub use fixed_decimal::{FixedDecimal, FixedPrecision};
 pub use function::Function;
