@@ -26,9 +26,12 @@ impl<T: FixedPrecision> Function<T> for CDFBowlingRational<T> {
 }
 
 pub fn bowling_cdf<T: FixedPrecision>(x: FixedDecimal<T>) -> FixedDecimal<T> {
+    if x < 0 {
+        return FixedDecimal::<T>::one() - bowling_cdf(-x);
+    }
     let expo_term = FixedDecimal::<T>::from_str("-1.5976").unwrap() * x
         - FixedDecimal::<T>::from_str("0.07056").unwrap() * x.cubed();
-    let denominator_exponent = range_reduce_taylor_exp::<T, 10>(expo_term);
+    let denominator_exponent = range_reduce_taylor_exp::<T, 14>(expo_term);
     FixedDecimal::<T>::one() / (FixedDecimal::<T>::one() + denominator_exponent)
 }
 
@@ -77,10 +80,10 @@ mod tests {
     #[test]
     fn test_cdf() {
         let cdf = CDFBowlingRational::new();
-        let x = FixedDecimal::<F10>::from_str("0").unwrap();
+        let x = FixedDecimal::<F10>::from_str("-3.315735902795").unwrap();
         assert_eq!(
             cdf.evaluate(x),
-            FixedDecimal::<F10>::from_str("0.5").unwrap()
+            FixedDecimal::<F10>::from_str("0.0003821245").unwrap()
         );
     }
 

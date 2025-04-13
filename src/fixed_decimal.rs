@@ -216,7 +216,7 @@ impl<T: FixedPrecision> fmt::Display for FixedDecimal<T> {
 
 impl<T: FixedPrecision> fmt::Debug for FixedDecimal<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "FixedDecimal<{}>({})", T::PRECISION, self.to_string())
+        write!(f, "{}", self.to_f64())
     }
 }
 
