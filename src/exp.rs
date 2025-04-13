@@ -1,11 +1,11 @@
 use std::marker::PhantomData;
 
 use crate::{
-    FixedDecimal, fixed_decimal::FixedPrecision, function::Function, interpolation::linear_interpolation,
-    lookup_table::LookupTable,
+    FixedDecimal, fixed_decimal::FixedPrecision, function::Function,
+    interpolation::linear_interpolation, lookup_table::LookupTable,
 };
 
-pub type ExpV1<T> = ExpRangeReduceTaylor<T, 10>;
+pub type ExpV1<T> = ExpLinearInterpLookupTable<T, 10>;
 pub struct ExpRangeReduceTaylor<T: FixedPrecision, const TAYLOR_ORDER: u32> {
     _precision: PhantomData<T>,
 }
@@ -18,7 +18,9 @@ impl<T: FixedPrecision, const TAYLOR_ORDER: u32> ExpRangeReduceTaylor<T, TAYLOR_
     }
 }
 
-impl<T: FixedPrecision, const TAYLOR_ORDER: u32> Function<T> for ExpRangeReduceTaylor<T, TAYLOR_ORDER> {
+impl<T: FixedPrecision, const TAYLOR_ORDER: u32> Function<T>
+    for ExpRangeReduceTaylor<T, TAYLOR_ORDER>
+{
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
         range_reduce_taylor_exp::<T, TAYLOR_ORDER>(x)
     }
