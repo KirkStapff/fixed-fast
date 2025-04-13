@@ -14,7 +14,7 @@ pub trait FixedPrecision: Copy + Eq {
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
-pub struct FixedDecimal<T: FixedPrecision + Copy>(i128, std::marker::PhantomData<T>);
+pub struct FixedDecimal<T: FixedPrecision>(i128, std::marker::PhantomData<T>);
 
 const fn scale_raw(raw: i128, scale_index: i32) -> i128 {
     if scale_index > 0 {
@@ -202,6 +202,10 @@ impl<T: FixedPrecision> FixedDecimal<T> {
         Self::from_raw(
             self.0 * self.0 / Self::scale() * self.0 / Self::scale() * self.0 / Self::scale(),
         )
+    }
+
+    pub fn abs(&self) -> Self {
+        Self::from_raw(self.0.abs())
     }
 }
 
