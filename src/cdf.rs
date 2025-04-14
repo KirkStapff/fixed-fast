@@ -7,50 +7,77 @@ use crate::{
 
 pub type CDFV1<T> = CDFLinearInterpLookupTable<T>;
 
-pub struct CDFBowlingRational<T: FixedPrecision> {
+pub struct CDFCustomAprox<T: FixedPrecision> {
     _precision: PhantomData<T>,
+    coefficients: [FixedDecimal<T>; 13],
 }
 
-impl<T: FixedPrecision> CDFBowlingRational<T> {
+impl<T: FixedPrecision> CDFCustomAprox<T> {
     pub fn new() -> Self {
         Self {
             _precision: PhantomData,
+            coefficients: [
+                FixedDecimal::from_str("-0.00000000436953479").unwrap(), //0
+                FixedDecimal::from_str("1.59576962000000000").unwrap(),  //1
+                FixedDecimal::from_str("-0.00000955404601").unwrap(),    //2
+                FixedDecimal::from_str("0.07274169990000000").unwrap(),  //3
+                FixedDecimal::from_str("-0.00026565023900000").unwrap(), //4
+                FixedDecimal::from_str("0.00050857094000000").unwrap(),  //5
+                FixedDecimal::from_str("-0.00079653385500000").unwrap(), //6
+                FixedDecimal::from_str("0.00059778488700000").unwrap(),  //7
+                FixedDecimal::from_str("-0.00040077230600000").unwrap(), //8
+                FixedDecimal::from_str("0.00014965658000000").unwrap(),  //9
+                FixedDecimal::from_str("-0.00002988796070000").unwrap(), //10
+                FixedDecimal::from_str("0.00000306494352000").unwrap(),  //11
+                FixedDecimal::from_str("-0.00000012783404900").unwrap(), //12
+            ],
         }
     }
 }
 
-impl<T: FixedPrecision> Function<T> for CDFBowlingRational<T> {
+impl<T: FixedPrecision> Function<T> for CDFCustomAprox<T> {
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
-        bowling_cdf(x)
+        if x < FixedDecimal::<T>::from_str("-6").unwrap() {
+            return FixedDecimal::<T>::zero();
+        }
+        if x > FixedDecimal::<T>::from_str("6").unwrap() {
+            return FixedDecimal::<T>::one();
+        }
+        topher_cdf(x, &self.coefficients)
     }
 }
 
-pub fn bowling_cdf<T: FixedPrecision>(x: FixedDecimal<T>) -> FixedDecimal<T> {
+pub fn topher_cdf<T: FixedPrecision>(
+    x: FixedDecimal<T>,
+    coefficients: &[FixedDecimal<T>; 13],
+) -> FixedDecimal<T> {
     if x < 0 {
-        return FixedDecimal::<T>::one() - bowling_cdf(-x);
+        return FixedDecimal::<T>::one() - topher_cdf(-x, coefficients);
     }
-    let expo_term = FixedDecimal::<T>::from_str("-1.5976").unwrap() * x
-        - FixedDecimal::<T>::from_str("0.07056").unwrap() * x.cubed();
-    let denominator_exponent = range_reduce_taylor_exp::<T, 14>(expo_term);
-    FixedDecimal::<T>::one() / (FixedDecimal::<T>::one() + denominator_exponent)
+    let f = x.polynomial(coefficients);
+    let denominator_exponent = range_reduce_taylor_exp::<T, 30>(-f);
+    let result = FixedDecimal::<T>::one() / (FixedDecimal::<T>::one() + denominator_exponent);
+    result
 }
-
 pub struct CDFLinearInterpLookupTable<T: FixedPrecision> {
     lookup: LookupTable<T>,
 }
 
 impl<T: FixedPrecision> CDFLinearInterpLookupTable<T> {
-    pub fn new(start: FixedDecimal<T>, end: FixedDecimal<T>, step_size: FixedDecimal<T>) -> Self {
+    pub fn new(end: FixedDecimal<T>, step_size: FixedDecimal<T>) -> Self {
+        let custom_aprox = CDFCustomAprox::new();
         Self {
-            lookup: LookupTable::new(start, end, step_size, bowling_cdf),
+            lookup: LookupTable::new(FixedDecimal::zero(), end, step_size, |x| {
+                custom_aprox.evaluate(x)
+            }),
         }
     }
 }
 
 impl<T: FixedPrecision> Function<T> for CDFLinearInterpLookupTable<T> {
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
-        if x < self.lookup.start() {
-            return FixedDecimal::<T>::zero();
+        if x < 0 {
+            return FixedDecimal::<T>::one() - self.evaluate(-x);
         }
         if x >= self.lookup.end() {
             return FixedDecimal::<T>::one();
@@ -71,32 +98,36 @@ mod tests {
     use super::*;
 
     #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-    struct F10;
+    struct F9;
 
-    impl FixedPrecision for F10 {
-        const PRECISION: u32 = 10;
+    impl FixedPrecision for F9 {
+        const PRECISION: u32 = 9;
     }
 
     #[test]
     fn test_cdf() {
-        let cdf = CDFBowlingRational::new();
-        let x = FixedDecimal::<F10>::from_str("-3.315735902795").unwrap();
+        let cdf = CDFCustomAprox::new();
+        let x = FixedDecimal::<F9>::from_str("1.16685").unwrap();
         assert_eq!(
             cdf.evaluate(x),
-            FixedDecimal::<F10>::from_str("0.0003821245").unwrap()
+            FixedDecimal::<F9>::from_str("0.878364523159478638").unwrap()
+        );
+        let x = FixedDecimal::<F9>::from_str("-1.12313512").unwrap();
+        assert_eq!(
+            cdf.evaluate(x),
+            FixedDecimal::<F9>::from_str("0.130690057273233524").unwrap()
         );
     }
 
     #[test]
     fn test_cdf_linear_interp_lookup_table() {
-        let table = CDFLinearInterpLookupTable::<F10>::new(
-            FixedDecimal::<F10>::from_str("-4").unwrap(),
-            FixedDecimal::<F10>::from_str("4").unwrap(),
-            FixedDecimal::<F10>::from_str("0.00001").unwrap(),
+        let table = CDFLinearInterpLookupTable::<F9>::new(
+            FixedDecimal::<F9>::from_str("6").unwrap(),
+            FixedDecimal::<F9>::from_str("0.00001").unwrap(),
         );
         assert_eq!(
-            table.evaluate(FixedDecimal::<F10>::from_str("-1.12313512").unwrap()),
-            FixedDecimal::<F10>::from_str("0.1307564188").unwrap()
+            table.evaluate(FixedDecimal::<F9>::from_str("-1.12313512").unwrap()),
+            FixedDecimal::<F9>::from_str("0.130690058").unwrap()
         );
     }
 }

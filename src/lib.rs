@@ -9,7 +9,7 @@ mod lookup_table;
 mod pdf;
 mod sqrt;
 
-pub use cdf::{CDFBowlingRational, CDFLinearInterpLookupTable, CDFV1};
+pub use cdf::CDFCustomAprox; //, CDFLinearInterpLookupTable, CDFV1};
 pub use exp::{ExpLinearInterpLookupTable, ExpRangeReduceTaylor, ExpV1};
 pub use fixed_decimal::{FixedDecimal, FixedPrecision};
 pub use function::Function;
@@ -260,28 +260,53 @@ mod tests {
     #[test]
     fn ln2() {
         let a = FixedDecimal::<F18>::ln2();
-        assert_eq!(a.to_string(), "0.693147180559945309");
+        assert_eq!(
+            a,
+            FixedDecimal::<F18>::from_str("0.693147180559945309").unwrap()
+        );
     }
 
     #[test]
     fn e() {
         let a = FixedDecimal::<F18>::e();
-        assert_eq!(a.to_string(), "2.718281828459045235");
+        assert_eq!(
+            a,
+            FixedDecimal::<F18>::from_str("2.718281828459045235").unwrap()
+        );
     }
 
     #[test]
     fn pi() {
         let a = FixedDecimal::<F18>::pi();
-        assert_eq!(a.to_string(), "3.141592653589793238");
+        assert_eq!(
+            a,
+            FixedDecimal::<F18>::from_str("3.141592653589793238").unwrap()
+        );
     }
 
     #[test]
     fn negatives() {
         let a = FixedDecimal::<F18>::from_i128(-10);
-        assert_eq!(a.to_string(), "-10");
+        assert_eq!(a, FixedDecimal::<F18>::from_str("-10").unwrap());
         let b: FixedDecimal<F18> = a / 2;
-        assert_eq!(b.to_string(), "-5");
+        assert_eq!(b, FixedDecimal::<F18>::from_str("-5").unwrap());
         let c = FixedDecimal::<F18>::from_str("-12.231231").unwrap();
-        assert_eq!(c.to_string(), "-12.231231");
+        assert_eq!(c, FixedDecimal::<F18>::from_str("-12.231231").unwrap());
+    }
+
+    #[test]
+    fn polynomial() {
+        let x = FixedDecimal::<F18>::from_i128(2);
+        let a = FixedDecimal::<F18>::from_i128(1);
+        let b = FixedDecimal::<F18>::from_i128(2);
+        let c = FixedDecimal::<F18>::from_i128(3);
+        let d = x.polynomial(&[a, b, c]);
+        assert_eq!(d, FixedDecimal::<F18>::from_i128(17));
+        let x = FixedDecimal::<F18>::from_str("4.123").unwrap();
+        let a = FixedDecimal::<F18>::from_str("1.635").unwrap();
+        let b = FixedDecimal::<F18>::from_str("-2.341").unwrap();
+        let c = FixedDecimal::<F18>::from_str("1.123").unwrap();
+        let d = x.polynomial(&[a, b, c]);
+        assert_eq!(d, FixedDecimal::<F18>::from_str("11.073078867").unwrap());
     }
 }

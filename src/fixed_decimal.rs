@@ -141,18 +141,6 @@ impl<T: FixedPrecision> FixedDecimal<T> {
         self.0 as f64 / Self::scale() as f64
     }
 
-    pub fn to_string(&self) -> String {
-        let decimal = self.0.abs() % Self::scale();
-        let decimal_string = decimal.to_string();
-        let decimal_str = decimal_string.trim_end_matches('0');
-
-        if decimal_str.is_empty() {
-            format!("{}", self.to_i128())
-        } else {
-            format!("{}.{}", self.to_i128(), decimal_str)
-        }
-    }
-
     pub fn neg(&self) -> Self {
         Self::from_raw(-self.0)
     }
@@ -189,6 +177,24 @@ impl<T: FixedPrecision> FixedDecimal<T> {
         Self::from_raw(self.0 / right)
     }
 
+    pub fn pow_i128(&self, power: i128) -> Self {
+        let mut result = Self::one();
+        for _ in 0..power {
+            result = result * self.0 / Self::scale();
+        }
+        result
+    }
+
+    pub fn polynomial(&self, coefficients: &[Self]) -> Self {
+        let mut result = coefficients[0];
+        let mut x_n = *self;
+        for coefficient in coefficients[1..].iter() {
+            result += *coefficient * x_n;
+            x_n *= *self;
+        }
+        result
+    }
+
     pub fn squared(&self) -> Self {
         Self::from_raw(self.0 * self.0 / Self::scale())
     }
@@ -206,17 +212,29 @@ impl<T: FixedPrecision> FixedDecimal<T> {
     pub fn abs(&self) -> Self {
         Self::from_raw(self.0.abs())
     }
+
+    pub fn to_string(&self) -> String {
+        let decimal = self.0.abs() % Self::scale();
+        let decimal_string = format!("{:0width$}", decimal, width = T::PRECISION as usize);
+        let decimal_str = decimal_string.trim_end_matches('0');
+
+        if decimal_str.is_empty() {
+            format!("{}", self.to_i128())
+        } else {
+            format!("{}.{}", self.to_i128(), decimal_str)
+        }
+    }
 }
 
 impl<T: FixedPrecision> fmt::Display for FixedDecimal<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_f64())
+        write!(f, "{}", self.to_string())
     }
 }
 
 impl<T: FixedPrecision> fmt::Debug for FixedDecimal<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_f64())
+        write!(f, "{}", self.to_string())
     }
 }
 
