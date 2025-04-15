@@ -37,16 +37,19 @@ pub struct PDFLinearInterpLookupTable<T: FixedPrecision> {
 }
 
 impl<T: FixedPrecision> PDFLinearInterpLookupTable<T> {
-    pub fn new(start: FixedDecimal<T>, end: FixedDecimal<T>, step_size: FixedDecimal<T>) -> Self {
+    pub fn new(end: FixedDecimal<T>, step_size: FixedDecimal<T>) -> Self {
         Self {
-            lookup: LookupTable::new(start, end, step_size, pdf::<T>),
+            lookup: LookupTable::new(FixedDecimal::zero(), end, step_size, pdf::<T>),
         }
     }
 }
 
 impl<T: FixedPrecision> Function<T> for PDFLinearInterpLookupTable<T> {
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
-        if x < self.lookup.start() || x > self.lookup.end() {
+        if x < 0 {
+            return self.evaluate(-x);
+        }
+        if x > self.lookup.end() {
             return FixedDecimal::<T>::zero();
         }
         let index = self.lookup.get_index(x).expect("Index not found");
@@ -91,7 +94,6 @@ mod tests {
     #[test]
     fn test_pdf_linear_interp_lookup_table() {
         let pdf = PDFLinearInterpLookupTable::<F14>::new(
-            FixedDecimal::<F14>::from_str("-4").unwrap(),
             FixedDecimal::<F14>::from_str("4").unwrap(),
             FixedDecimal::<F14>::from_str("0.00001").unwrap(),
         );
