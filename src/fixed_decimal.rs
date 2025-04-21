@@ -70,6 +70,14 @@ impl<T: FixedPrecision> FixedDecimal<T> {
         }
     }
 
+    pub fn to_le_bytes(self) -> [u8; 16] {
+        self.0.to_le_bytes()
+    }
+
+    pub fn from_le_bytes(bytes: [u8; 16]) -> Self {
+        Self::from_raw(i128::from_le_bytes(bytes))
+    }
+
     pub fn floor(self) -> Self {
         Self::from_raw(self.0 / Self::scale() * Self::scale())
     }
