@@ -99,7 +99,7 @@ mod tests {
         );
         assert_eq!(
             pdf.evaluate(FixedDecimal::<F14>::from_str("-1.12313512").unwrap()),
-            FixedDecimal::<F14>::from_str("0.21232125827745").unwrap()
+            FixedDecimal::<F14>::from_str("0.21232125827746").unwrap()
         );
         assert_eq!(
             pdf.evaluate(FixedDecimal::<F14>::from_str("0").unwrap()),

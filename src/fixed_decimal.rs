@@ -13,7 +13,7 @@ pub trait FixedPrecision: Copy + Eq {
     const PRECISION: u32;
 }
 
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub struct FixedDecimal<T: FixedPrecision>(i128, std::marker::PhantomData<T>);
 
 const fn scale_raw(raw: i128, scale_index: i32) -> i128 {
