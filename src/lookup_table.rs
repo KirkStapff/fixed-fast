@@ -1,6 +1,6 @@
 use crate::{
     error::{FixedFastError, Result},
-    fixed_decimal::{FixedPrecision, FixedDecimal},
+    fixed_decimal::{FixedDecimal, FixedPrecision},
 };
 
 pub struct LookupTable<T: FixedPrecision> {

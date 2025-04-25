@@ -94,6 +94,10 @@ impl<T: FixedPrecision> FixedDecimal<T> {
         Self(x, std::marker::PhantomData)
     }
 
+    pub const fn from_f64(x: f64) -> Self {
+        Self((x * Self::scale() as f64) as i128, std::marker::PhantomData)
+    }
+
     pub fn min_positive() -> Self {
         Self::from_raw(1)
     }

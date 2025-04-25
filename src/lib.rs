@@ -309,4 +309,10 @@ mod tests {
         let d = x.polynomial(&[a, b, c]);
         assert_eq!(d, FixedDecimal::<F18>::from_str("11.073078867").unwrap());
     }
+
+    #[test]
+    fn from_f64() {
+        let a = FixedDecimal::<F18>::from_f64(1.234);
+        assert_eq!(a, FixedDecimal::<F18>::from_str("1.234").unwrap());
+    }
 }
