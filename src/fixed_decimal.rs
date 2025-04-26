@@ -102,6 +102,16 @@ impl<T: FixedPrecision> FixedDecimal<T> {
         Self::from_raw(1)
     }
 
+    pub fn signum(&self) -> i128 {
+        if self.0 > 0 {
+            1
+        } else if self.0 < 0 {
+            -1
+        } else {
+            0
+        }
+    }
+
     pub fn from_str(x: &str) -> Result<Self, &'static str> {
         let is_negative = x.starts_with('-');
         let x = if is_negative { &x[1..] } else { x };
