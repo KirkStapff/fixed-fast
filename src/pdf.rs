@@ -1,8 +1,14 @@
 use std::marker::PhantomData;
 
 use crate::{
-    FixedDecimal, exp::range_reduce_taylor_exp, fixed_decimal::FixedPrecision, function::Function,
-    interpolation::linear_interpolation, lookup_table::LookupTable, sqrt::sqrt_newton_raphson,
+    FixedDecimal,
+    error::Result,
+    exp::range_reduce_taylor_exp,
+    fixed_decimal::FixedPrecision,
+    function::{Function, TryFunction},
+    interpolation::linear_interpolation,
+    lookup_table::LookupTable,
+    sqrt::sqrt_newton_raphson,
 };
 
 pub type PDFV1<T> = PDFLinearInterpLookupTable<T>;
@@ -22,6 +28,12 @@ impl<T: FixedPrecision> PDF<T> {
 impl<T: FixedPrecision> Function<T> for PDF<T> {
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
         pdf(x)
+    }
+}
+
+impl<T: FixedPrecision> TryFunction<T> for PDF<T> {
+    fn try_evaluate(&self, x: FixedDecimal<T>) -> Result<FixedDecimal<T>> {
+        Ok(pdf(x))
     }
 }
 
@@ -49,10 +61,18 @@ impl<T: FixedPrecision> Function<T> for PDFLinearInterpLookupTable<T> {
         if x < 0 {
             return self.evaluate(-x);
         }
-        if x > self.lookup.end() {
+        // If the value is at or beyond the upper bound of the lookup table, we
+        // do not have a following entry to interpolate with. In that case we
+        // can safely return 0 as the PDF is effectively zero this far in the
+        // tail (and, importantly, avoid indexing past the table length).
+        if x >= self.lookup.end() {
             return FixedDecimal::<T>::zero();
         }
         let index = self.lookup.get_index(x).expect("Index not found");
+        if index + 1 >= self.lookup.table.len() {
+            return self.lookup.table[index];
+        }
+
         let lower_value = self.lookup.step_size() * index + self.lookup.start();
         linear_interpolation(
             x,
@@ -61,6 +81,29 @@ impl<T: FixedPrecision> Function<T> for PDFLinearInterpLookupTable<T> {
             self.lookup.table[index],
             self.lookup.table[index + 1],
         )
+    }
+}
+
+impl<T: FixedPrecision> TryFunction<T> for PDFLinearInterpLookupTable<T> {
+    fn try_evaluate(&self, x: FixedDecimal<T>) -> Result<FixedDecimal<T>> {
+        if x < 0 {
+            return self.try_evaluate(-x);
+        }
+        if x >= self.lookup.end() {
+            return Ok(FixedDecimal::<T>::zero());
+        }
+        let index = self.lookup.get_index(x)?;
+        if index + 1 >= self.lookup.table.len() {
+            return Ok(self.lookup.table[index]);
+        }
+        let lower_value = self.lookup.step_size() * index + self.lookup.start();
+        Ok(linear_interpolation(
+            x,
+            lower_value,
+            lower_value + self.lookup.step_size(),
+            self.lookup.table[index],
+            self.lookup.table[index + 1],
+        ))
     }
 }
 
@@ -108,6 +151,14 @@ mod tests {
         assert_eq!(
             pdf.evaluate(FixedDecimal::<F14>::from_str("2.3463434").unwrap()),
             FixedDecimal::<F14>::from_str("0.02543568401209").unwrap()
+        );
+        assert_eq!(
+            pdf.evaluate(FixedDecimal::<F14>::from_str("2000").unwrap()),
+            FixedDecimal::<F14>::from_str("0.00000000000000").unwrap()
+        );
+        assert_eq!(
+            pdf.evaluate(FixedDecimal::<F14>::from_str("-2000").unwrap()),
+            FixedDecimal::<F14>::from_str("0.00000000000000").unwrap()
         );
     }
 }

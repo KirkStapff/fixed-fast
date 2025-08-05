@@ -1,8 +1,13 @@
 use std::marker::PhantomData;
 
 use crate::{
-    FixedDecimal, exp::range_reduce_taylor_exp, fixed_decimal::FixedPrecision, function::Function,
-    interpolation::linear_interpolation, lookup_table::LookupTable,
+    FixedDecimal,
+    error::Result,
+    exp::range_reduce_taylor_exp,
+    fixed_decimal::FixedPrecision,
+    function::{Function, TryFunction},
+    interpolation::linear_interpolation,
+    lookup_table::LookupTable,
 };
 
 pub type CDFV1<T> = CDFLinearInterpLookupTable<T>;
@@ -47,6 +52,12 @@ impl<T: FixedPrecision> Function<T> for CDFCustomAprox<T> {
     }
 }
 
+impl<T: FixedPrecision> TryFunction<T> for CDFCustomAprox<T> {
+    fn try_evaluate(&self, x: FixedDecimal<T>) -> Result<FixedDecimal<T>> {
+        Ok(self.evaluate(x)) // evaluation itself is safe within given domain
+    }
+}
+
 pub fn topher_cdf<T: FixedPrecision>(
     x: FixedDecimal<T>,
     coefficients: &[FixedDecimal<T>; 13],
@@ -83,6 +94,9 @@ impl<T: FixedPrecision> Function<T> for CDFLinearInterpLookupTable<T> {
             return FixedDecimal::<T>::one();
         }
         let index = self.lookup.get_index(x).expect("Index not found");
+        if index + 1 >= self.lookup.table.len() {
+            return self.lookup.table[index];
+        }
         let lower_value = self.lookup.step_size() * index + self.lookup.start();
         linear_interpolation(
             x,
@@ -91,6 +105,29 @@ impl<T: FixedPrecision> Function<T> for CDFLinearInterpLookupTable<T> {
             self.lookup.table[index],
             self.lookup.table[index + 1],
         )
+    }
+}
+
+impl<T: FixedPrecision> TryFunction<T> for CDFLinearInterpLookupTable<T> {
+    fn try_evaluate(&self, x: FixedDecimal<T>) -> Result<FixedDecimal<T>> {
+        if x < 0 {
+            return self.try_evaluate(-x).map(|v| FixedDecimal::<T>::one() - v);
+        }
+        if x >= self.lookup.end() {
+            return Ok(FixedDecimal::<T>::one());
+        }
+        let index = self.lookup.get_index(x)?;
+        if index + 1 >= self.lookup.table.len() {
+            return Ok(self.lookup.table[index]);
+        }
+        let lower_value = self.lookup.step_size() * index + self.lookup.start();
+        Ok(linear_interpolation(
+            x,
+            lower_value,
+            lower_value + self.lookup.step_size(),
+            self.lookup.table[index],
+            self.lookup.table[index + 1],
+        ))
     }
 }
 

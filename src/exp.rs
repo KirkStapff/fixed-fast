@@ -1,8 +1,12 @@
 use std::marker::PhantomData;
 
 use crate::{
-    FixedDecimal, fixed_decimal::FixedPrecision, function::Function,
-    interpolation::linear_interpolation, lookup_table::LookupTable,
+    FixedDecimal,
+    error::Result,
+    fixed_decimal::FixedPrecision,
+    function::{Function, TryFunction},
+    interpolation::linear_interpolation,
+    lookup_table::LookupTable,
 };
 
 pub type ExpV1<T> = ExpLinearInterpLookupTable<T, 10>;
@@ -23,6 +27,14 @@ impl<T: FixedPrecision, const TAYLOR_ORDER: u32> Function<T>
 {
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
         range_reduce_taylor_exp::<T, TAYLOR_ORDER>(x)
+    }
+}
+
+impl<T: FixedPrecision, const TAYLOR_ORDER: u32> TryFunction<T>
+    for ExpRangeReduceTaylor<T, TAYLOR_ORDER>
+{
+    fn try_evaluate(&self, x: FixedDecimal<T>) -> Result<FixedDecimal<T>> {
+        Ok(range_reduce_taylor_exp::<T, TAYLOR_ORDER>(x))
     }
 }
 
@@ -48,6 +60,9 @@ impl<T: FixedPrecision, const TAYLOR_ORDER: u32> Function<T>
 {
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
         let index = self.lookup.get_index(x).expect("Index not found");
+        if index + 1 >= self.lookup.table.len() {
+            return self.lookup.table[index];
+        }
         let lower_value = self.lookup.step_size() * index + self.lookup.start();
         linear_interpolation(
             x,
@@ -56,6 +71,25 @@ impl<T: FixedPrecision, const TAYLOR_ORDER: u32> Function<T>
             self.lookup.table[index],
             self.lookup.table[index + 1],
         )
+    }
+}
+
+impl<T: FixedPrecision, const TAYLOR_ORDER: u32> TryFunction<T>
+    for ExpLinearInterpLookupTable<T, TAYLOR_ORDER>
+{
+    fn try_evaluate(&self, x: FixedDecimal<T>) -> Result<FixedDecimal<T>> {
+        let index = self.lookup.get_index(x)?;
+        if index + 1 >= self.lookup.table.len() {
+            return Ok(self.lookup.table[index]);
+        }
+        let lower_value = self.lookup.step_size() * index + self.lookup.start();
+        Ok(linear_interpolation(
+            x,
+            lower_value,
+            lower_value + self.lookup.step_size(),
+            self.lookup.table[index],
+            self.lookup.table[index + 1],
+        ))
     }
 }
 

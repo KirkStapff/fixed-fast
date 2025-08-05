@@ -13,9 +13,16 @@ pub use cdf::{CDFCustomAprox, CDFLinearInterpLookupTable, CDFV1};
 pub use exp::{ExpLinearInterpLookupTable, ExpRangeReduceTaylor, ExpV1};
 pub use fixed_decimal::{FixedDecimal, FixedPrecision};
 pub use function::Function;
+pub use function::TryFunction; // fallible trait
+#[cfg(feature = "safe")]
+pub use function::TryFunction as Function; // alias when safe feature is enabled
 pub use ln::{LnArcTanhExpansion, LnLinearInterpLookupTable, LnV1};
 pub use pdf::{PDFLinearInterpLookupTable, PDFV1};
 pub use sqrt::{SqrtLinearInterpLookupTable, SqrtNewtonRaphson, SqrtV1};
+
+// Re-export fallible helpers for convenience
+pub use ln::range_reduce_arctanh_ln_try as ln_try;
+pub use sqrt::sqrt_newton_raphson_try as sqrt_try;
 #[cfg(test)]
 mod tests {
     use crate::fixed_decimal::{FixedDecimal, FixedPrecision};
@@ -142,6 +149,27 @@ mod tests {
         let b = 3123123;
         a /= b;
         assert_eq!(a.to_f64(), 0.424330069);
+    }
+
+    #[test]
+    fn checked_arithmetic() {
+        // happy paths
+        let a = FixedDecimal::<F9>::from_i128(2);
+        let b = FixedDecimal::<F9>::from_i128(3);
+        assert_eq!(a.checked_add(b).unwrap(), FixedDecimal::<F9>::from_i128(5));
+        assert_eq!(b.checked_sub(a).unwrap(), FixedDecimal::<F9>::from_i128(1));
+        assert_eq!(a.checked_mul(b).unwrap(), FixedDecimal::<F9>::from_i128(6));
+        assert!(a.checked_div(FixedDecimal::<F9>::from_i128(0)).is_err());
+
+        // overflow scenarios (addition)
+        let max_raw = i128::MAX;
+        let big = FixedDecimal::<F9>::from_raw(max_raw);
+        assert!(big.checked_add(FixedDecimal::<F9>::one()).is_err());
+        assert!(
+            FixedDecimal::<F9>::from_raw(i128::MIN)
+                .checked_sub(FixedDecimal::<F9>::one())
+                .is_err()
+        );
     }
 
     #[test]

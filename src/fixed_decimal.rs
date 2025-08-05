@@ -1,3 +1,7 @@
+use crate::{
+    error::{FixedFastError, Result as CrateResult},
+    sqrt::sqrt_newton_raphson_try,
+};
 use core::fmt;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -112,7 +116,7 @@ impl<T: FixedPrecision> FixedDecimal<T> {
         }
     }
 
-    pub fn from_str(x: &str) -> Result<Self, &'static str> {
+    pub fn from_str(x: &str) -> std::result::Result<Self, &'static str> {
         let is_negative = x.starts_with('-');
         let x = if is_negative { &x[1..] } else { x };
 
@@ -244,6 +248,44 @@ impl<T: FixedPrecision> FixedDecimal<T> {
             format!("{}", self.to_i128())
         } else {
             format!("{}.{}", self.to_i128(), decimal_str)
+        }
+    }
+
+    /// Checked division that returns an error when dividing by zero.
+    pub fn checked_div(self, rhs: Self) -> CrateResult<Self> {
+        if rhs.0 == 0 {
+            Err(FixedFastError::DivideByZero)
+        } else {
+            Ok(self.div(rhs))
+        }
+    }
+
+    /// Square root with error handling. Uses Newton-Raphson with compile-time depth.
+    pub fn checked_sqrt<const APPROX_DEPTH: u32>(self) -> CrateResult<Self> {
+        sqrt_newton_raphson_try::<T, APPROX_DEPTH>(self)
+    }
+
+    /// Checked addition detecting overflow.
+    pub fn checked_add(self, rhs: Self) -> CrateResult<Self> {
+        match self.0.checked_add(rhs.0) {
+            Some(sum) => Ok(Self::from_raw(sum)),
+            None => Err(FixedFastError::Overflow),
+        }
+    }
+
+    /// Checked subtraction detecting overflow.
+    pub fn checked_sub(self, rhs: Self) -> CrateResult<Self> {
+        match self.0.checked_sub(rhs.0) {
+            Some(diff) => Ok(Self::from_raw(diff)),
+            None => Err(FixedFastError::Overflow),
+        }
+    }
+
+    /// Checked multiplication detecting overflow.
+    pub fn checked_mul(self, rhs: Self) -> CrateResult<Self> {
+        match self.0.checked_mul(rhs.0) {
+            Some(prod_raw) => Ok(Self::from_raw(prod_raw / Self::scale())),
+            None => Err(FixedFastError::Overflow),
         }
     }
 }

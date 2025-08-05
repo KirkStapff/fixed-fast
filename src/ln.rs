@@ -1,8 +1,9 @@
 use std::marker::PhantomData;
 
 use crate::{
+    error::{FixedFastError, Result},
     fixed_decimal::{FixedDecimal, FixedPrecision},
-    function::Function,
+    function::{Function, TryFunction},
     interpolation::linear_interpolation,
     lookup_table::LookupTable,
 };
@@ -51,6 +52,9 @@ impl<T: FixedPrecision, const APPROX_DEPTH: u32> Function<T>
 {
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
         let index = self.lookup.get_index(x).expect("Index not found");
+        if index + 1 >= self.lookup.table.len() {
+            return self.lookup.table[index];
+        }
         let lower_value = self.lookup.step_size() * index + self.lookup.start();
         linear_interpolation(
             x,
@@ -62,14 +66,16 @@ impl<T: FixedPrecision, const APPROX_DEPTH: u32> Function<T>
     }
 }
 
-fn range_reduce_arctanh_ln<T: FixedPrecision, const APPROX_DEPTH: u32>(
+pub fn range_reduce_arctanh_ln_try<T: FixedPrecision, const APPROX_DEPTH: u32>(
     input: FixedDecimal<T>,
-) -> FixedDecimal<T> {
+) -> Result<FixedDecimal<T>> {
+    if input <= FixedDecimal::<T>::zero() {
+        return Err(FixedFastError::DomainError(
+            "ln is undefined for non-positive numbers",
+        ));
+    }
     let mut shift_coef = 0;
     let mut input = input;
-    if input == 0 {
-        panic!("ln(0) is undefined");
-    }
     while input > 2 {
         input /= 2;
         shift_coef += 1;
@@ -78,8 +84,6 @@ fn range_reduce_arctanh_ln<T: FixedPrecision, const APPROX_DEPTH: u32>(
         input *= 2;
         shift_coef -= 1;
     }
-    // ln(x) = 2 arctanh(x - 1 / x + 1) logarithmic expansion via inverse hyperbolic tangent
-
     let arctan_term: FixedDecimal<T> = (input - 1) / (input + 1);
     let arctan_term_squared = arctan_term * arctan_term;
     let mut nth_term = arctan_term;
@@ -88,7 +92,41 @@ fn range_reduce_arctanh_ln<T: FixedPrecision, const APPROX_DEPTH: u32>(
         nth_term = nth_term * arctan_term_squared / (2 * n as i64 + 1);
         running_sum += nth_term;
     }
-    running_sum * 2 + FixedDecimal::<T>::ln2() * shift_coef
+    Ok(running_sum * 2 + FixedDecimal::<T>::ln2() * shift_coef)
+}
+
+// Provide panic version delegating to try variant
+pub fn range_reduce_arctanh_ln<T: FixedPrecision, const APPROX_DEPTH: u32>(
+    input: FixedDecimal<T>,
+) -> FixedDecimal<T> {
+    range_reduce_arctanh_ln_try::<T, APPROX_DEPTH>(input).expect("ln computation failed")
+}
+
+impl<T: FixedPrecision, const APPROX_DEPTH: u32> TryFunction<T>
+    for LnArcTanhExpansion<T, APPROX_DEPTH>
+{
+    fn try_evaluate(&self, x: FixedDecimal<T>) -> Result<FixedDecimal<T>> {
+        range_reduce_arctanh_ln_try::<T, APPROX_DEPTH>(x)
+    }
+}
+
+impl<T: FixedPrecision, const APPROX_DEPTH: u32> TryFunction<T>
+    for LnLinearInterpLookupTable<T, APPROX_DEPTH>
+{
+    fn try_evaluate(&self, x: FixedDecimal<T>) -> Result<FixedDecimal<T>> {
+        let index = self.lookup.get_index(x)?;
+        if index + 1 >= self.lookup.table.len() {
+            return Ok(self.lookup.table[index]);
+        }
+        let lower_value = self.lookup.step_size() * index + self.lookup.start();
+        Ok(linear_interpolation(
+            x,
+            lower_value,
+            lower_value + self.lookup.step_size(),
+            self.lookup.table[index],
+            self.lookup.table[index + 1],
+        ))
+    }
 }
 
 #[cfg(test)]

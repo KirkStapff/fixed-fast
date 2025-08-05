@@ -1,8 +1,9 @@
 use std::marker::PhantomData;
 
 use crate::{
+    error::{FixedFastError, Result},
     fixed_decimal::{FixedDecimal, FixedPrecision},
-    function::Function,
+    function::{Function, TryFunction},
     interpolation::linear_interpolation,
     lookup_table::LookupTable,
 };
@@ -51,6 +52,9 @@ impl<T: FixedPrecision, const APPROX_DEPTH: u32> Function<T>
 {
     fn evaluate(&self, x: FixedDecimal<T>) -> FixedDecimal<T> {
         let index = self.lookup.get_index(x).expect("Index not found");
+        if index + 1 >= self.lookup.table.len() {
+            return self.lookup.table[index];
+        }
         let lower_value = self.lookup.step_size() * index + self.lookup.start();
         linear_interpolation(
             x,
@@ -73,6 +77,53 @@ pub fn sqrt_newton_raphson<T: FixedPrecision, const APPROX_DEPTH: u32>(
         y = (y + x.div(y)) / 2_i64;
     }
     y
+}
+
+pub fn sqrt_newton_raphson_try<T: FixedPrecision, const APPROX_DEPTH: u32>(
+    x: FixedDecimal<T>,
+) -> Result<FixedDecimal<T>> {
+    if x < FixedDecimal::<T>::zero() {
+        return Err(FixedFastError::DomainError(
+            "sqrt is undefined for negative numbers",
+        ));
+    }
+    if x == FixedDecimal::<T>::zero() {
+        return Ok(FixedDecimal::<T>::zero());
+    }
+    let mut y = x / 2_i64;
+    for _ in 0..APPROX_DEPTH {
+        y = (y + x.div(y)) / 2_i64;
+    }
+    Ok(y)
+}
+
+// TryFunction implementation for direct sqrt algorithm
+impl<T: FixedPrecision, const APPROX_DEPTH: u32> TryFunction<T>
+    for SqrtNewtonRaphson<T, APPROX_DEPTH>
+{
+    fn try_evaluate(&self, x: FixedDecimal<T>) -> Result<FixedDecimal<T>> {
+        sqrt_newton_raphson_try::<T, APPROX_DEPTH>(x)
+    }
+}
+
+// TryFunction implementation for lookup table based sqrt
+impl<T: FixedPrecision, const APPROX_DEPTH: u32> TryFunction<T>
+    for SqrtLinearInterpLookupTable<T, APPROX_DEPTH>
+{
+    fn try_evaluate(&self, x: FixedDecimal<T>) -> Result<FixedDecimal<T>> {
+        let index = self.lookup.get_index(x)?;
+        if index + 1 >= self.lookup.table.len() {
+            return Ok(self.lookup.table[index]);
+        }
+        let lower_value = self.lookup.step_size() * index + self.lookup.start();
+        Ok(linear_interpolation(
+            x,
+            lower_value,
+            lower_value + self.lookup.step_size(),
+            self.lookup.table[index],
+            self.lookup.table[index + 1],
+        ))
+    }
 }
 
 mod tests {

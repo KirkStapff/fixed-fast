@@ -33,7 +33,7 @@ impl<T: FixedPrecision> LookupTable<T> {
 
     pub fn get_index(&self, x: FixedDecimal<T>) -> Result<usize> {
         if x < self.start || x > self.end {
-            return Err(FixedFastError::OutOfRange(x.to_i128() as usize));
+            return Err(FixedFastError::OutOfRange(x.to_i128()));
         }
         let index = ((x.sub(self.start)).div(self.step_size)).to_i128() as usize;
         Ok(index)
