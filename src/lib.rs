@@ -10,6 +10,7 @@ mod pdf;
 mod sqrt;
 
 pub use cdf::{CDFCustomAprox, CDFLinearInterpLookupTable, CDFV1};
+pub use error::{FixedFastError, FixedPointError, FixedPointResult};
 pub use exp::{ExpLinearInterpLookupTable, ExpRangeReduceTaylor, ExpV1};
 pub use fixed_decimal::{FixedDecimal, FixedPrecision};
 pub use function::Function;

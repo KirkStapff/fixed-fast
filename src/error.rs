@@ -18,3 +18,7 @@ impl From<std::num::TryFromIntError> for FixedFastError {
         FixedFastError::DomainError("integer conversion error")
     }
 }
+
+// Public aliases for external users
+pub use FixedFastError as FixedPointError;
+pub type FixedPointResult<T> = std::result::Result<T, FixedFastError>;
